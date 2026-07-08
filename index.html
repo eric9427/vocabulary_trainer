@@ -1,0 +1,2543 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vokabeln">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>Vokabeltrainer</title>
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#ffffff; --card2:#ffffff; --text:#1c1c1e; --muted:#8a8a8e;
+    --line:#e5e5ea; --blue:#0a84ff; --green:#34c759; --orange:#ff9f0a; --red:#ff3b30;
+    --field:#ffffff; --shadow:0 1px 3px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#000000; --card:#1c1c1e; --card2:#2c2c2e; --text:#ffffff; --muted:#98989f;
+      --line:#38383a; --field:#1c1c1e; --shadow:none;
+    }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-text-size-adjust:100%;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .app{max-width:560px; margin:0 auto; padding:12px 16px 28px; min-height:100%}
+  h1{font-size:22px; font-weight:700; margin:6px 0 2px}
+  .sub{color:var(--muted); font-size:13px; margin:0 0 14px}
+  .row{display:flex; align-items:center; gap:10px}
+  .spacer{flex:1}
+  button{font-family:inherit; font-size:16px; cursor:pointer; border:none; color:inherit; background:none}
+  .iconbtn{width:38px;height:38px;border-radius:19px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:var(--shadow)}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0 18px}
+  .stat{background:var(--card); border-radius:14px; padding:14px 14px; box-shadow:var(--shadow)}
+  .stat .n{font-size:26px; font-weight:700; line-height:1}
+  .stat .l{color:var(--muted); font-size:12px; margin-top:6px}
+  .stat.due .n{color:var(--blue)} .stat.hard .n{color:var(--orange)} .stat.learned .n{color:var(--green)}
+  .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+       padding:15px; border-radius:14px; font-size:17px; font-weight:600; margin-bottom:10px;
+       background:var(--card); box-shadow:var(--shadow)}
+  .btn.primary{background:var(--blue); color:#fff}
+  .btn.warn{background:var(--card); color:var(--orange)}
+  .btn small{font-weight:500; opacity:.7; font-size:13px}
+  .btn:disabled{opacity:.4}
+  .card{background:var(--card); border-radius:16px; padding:20px; box-shadow:var(--shadow); margin-bottom:14px}
+  .hidden{display:none !important}
+
+  /* practice */
+  .topbar{display:flex; align-items:center; gap:8px; margin-bottom:14px}
+  .progress{flex:1; height:6px; background:var(--line); border-radius:3px; overflow:hidden}
+  .progress > i{display:block; height:100%; background:var(--blue); width:0%; transition:width .25s}
+  .modechip{font-size:12px; color:var(--muted)}
+  .prompt-label{color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.04em}
+  .prompt{font-size:27px; font-weight:600; margin:6px 0 2px; line-height:1.25}
+  .prompt-extra{color:var(--muted); font-size:14px; margin-top:4px}
+  input.answer{width:100%; margin-top:16px; padding:14px; font-size:18px; border-radius:12px;
+       border:1px solid var(--line); background:var(--field); color:var(--text)}
+  input.answer:focus{outline:none; border-color:var(--blue)}
+  .reveal-label{color:var(--muted); font-size:13px; margin-top:2px}
+  .answer-en{font-size:23px; font-weight:600; margin:4px 0 2px; line-height:1.3}
+  .yours{font-size:14px; color:var(--muted); margin-top:8px}
+  .hint{display:inline-block; margin-top:12px; padding:5px 11px; border-radius:20px; font-size:13px; font-weight:600}
+  .hint.ok{background:rgba(52,199,89,.15); color:var(--green)}
+  .hint.near{background:rgba(255,159,10,.15); color:var(--orange)}
+  .hint.miss{background:rgba(255,59,48,.12); color:var(--red)}
+  .badge-hard{display:inline-block; margin-left:8px; font-size:11px; font-weight:700; color:var(--orange);
+       background:rgba(255,159,10,.15); padding:2px 8px; border-radius:10px; vertical-align:middle}
+
+  .grades{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px}
+  .grade{padding:14px 6px; border-radius:14px; font-weight:700; font-size:15px; color:#fff; line-height:1.15}
+  .grade small{display:block; font-weight:500; font-size:11px; opacity:.9; margin-top:3px}
+  .grade.g0{background:var(--red)} .grade.g1{background:var(--orange)} .grade.g2{background:var(--green)}
+  .linkbtn{color:var(--blue); font-size:15px; padding:8px 4px}
+  .center{text-align:center}
+
+  /* sheet / modal */
+  .sheet-bg{position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:flex-end; z-index:50}
+  .sheet{background:var(--bg); width:100%; max-width:560px; margin:0 auto; border-radius:18px 18px 0 0;
+         padding:10px 16px calc(20px + env(safe-area-inset-bottom)); max-height:88vh; overflow:auto}
+  .grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:6px auto 12px}
+  .sheet h2{font-size:19px; margin:4px 0 12px}
+  .list{background:var(--card); border-radius:14px; overflow:hidden; margin-bottom:16px; box-shadow:var(--shadow)}
+  .item{display:flex; align-items:center; gap:12px; padding:15px 16px; border-bottom:1px solid var(--line); font-size:16px; width:100%; text-align:left; background:none}
+  .item:last-child{border-bottom:none}
+  .item .ic{font-size:19px; width:24px; text-align:center}
+  .item .tx{flex:1}
+  .item .tx small{display:block; color:var(--muted); font-size:12px; margin-top:2px; font-weight:400}
+  .item.danger{color:var(--red)}
+  .toast{position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+         background:#000; color:#fff; padding:11px 18px; border-radius:22px; font-size:14px; z-index:80;
+         opacity:0; transition:opacity .25s; max-width:90%; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.3)}
+  .toast.show{opacity:.95}
+  @media (prefers-color-scheme: dark){ .toast{background:#2c2c2e} }
+  .savebar{font-size:12px; color:var(--muted); text-align:center; margin-top:6px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:4px;vertical-align:middle;margin-right:5px}
+  .dot.dirty{background:var(--orange)} .dot.clean{background:var(--green)}
+  .help p{font-size:14px; line-height:1.5; color:var(--text)}
+  .help small{color:var(--muted)}
+  .filepick{display:none}
+</style>
+
+<div class="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="home">
+    <div class="row">
+      <div>
+        <h1>Vokabeltrainer</h1>
+        <p class="sub" id="homeSub">Deutsch → Englisch</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="iconbtn" id="openMenu" aria-label="Menü">⚙️</button>
+    </div>
+
+    <div class="grid">
+      <div class="stat due"><div class="n" id="statDue">0</div><div class="l">Fällig zum Üben</div></div>
+      <div class="stat hard"><div class="n" id="statHard">0</div><div class="l">Schwierige Wörter</div></div>
+      <div class="stat learned"><div class="n" id="statLearned">0</div><div class="l">Gut gelernt</div></div>
+      <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Wörter gesamt</div></div>
+    </div>
+
+    <button class="btn primary" id="startDue">Üben <small id="dueHint"></small></button>
+    <button class="btn warn" id="startHard">Nur schwierige Wörter <small id="hardHint"></small></button>
+    <button class="btn" id="startAll">Alle Wörter durchmischen</button>
+
+    <div class="savebar" id="saveBar"></div>
+  </section>
+
+  <!-- ============ PRACTICE ============ -->
+  <section id="practice" class="hidden">
+    <div class="topbar">
+      <button class="iconbtn" id="quit" aria-label="Zurück">✕</button>
+      <div class="progress"><i id="progFill"></i></div>
+      <span class="modechip" id="modeChip"></span>
+    </div>
+
+    <div class="card">
+      <div class="prompt-label">Deutsch</div>
+      <div class="prompt" id="promptDe">–</div>
+      <div class="prompt-extra" id="promptExtra"></div>
+
+      <div id="askArea">
+        <input class="answer" id="answerInput" type="text" autocomplete="off" autocapitalize="none"
+               autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="Englisch eingeben …">
+        <button class="btn primary" id="checkBtn" style="margin-top:14px">Aufdecken</button>
+      </div>
+
+      <div id="revealArea" class="hidden">
+        <div class="reveal-label">Richtige Antwort</div>
+        <div class="answer-en" id="answerEn">–</div>
+        <div class="yours" id="yourAnswer"></div>
+        <span class="hint" id="hint"></span>
+      </div>
+    </div>
+
+    <div id="gradeArea" class="hidden">
+      <p class="sub center" style="margin:2px 0 10px">Wie gut saß es?</p>
+      <div class="grades">
+        <button class="grade g0" data-g="0">Gar nicht<small>bald wieder</small></button>
+        <button class="grade g1" data-g="1">Fast<small>morgen nochmal</small></button>
+        <button class="grade g2" data-g="2">Perfekt<small>erledigt</small></button>
+      </div>
+      <button class="linkbtn center" id="skipBtn" style="display:block;margin:14px auto 0">Überspringen</button>
+    </div>
+  </section>
+
+  <!-- ============ SESSION DONE ============ -->
+  <section id="done" class="hidden">
+    <div class="card center">
+      <div style="font-size:44px">🎉</div>
+      <h1 style="margin:10px 0 4px">Geschafft!</h1>
+      <p class="sub" id="doneText" style="margin-bottom:0"></p>
+    </div>
+    <button class="btn primary" id="doneHome">Zur Übersicht</button>
+  </section>
+
+</div>
+
+<!-- ============ MENU SHEET ============ -->
+<div id="menu" class="sheet-bg hidden">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Menü &amp; Sicherung</h2>
+
+    <div class="list">
+      <button class="item" id="mExport"><span class="ic">📤</span><span class="tx">In iCloud sichern <small>Backup-Datei zum Ablegen in iCloud Drive</small></span></button>
+      <button class="item" id="mImportJson"><span class="ic">📥</span><span class="tx">Backup laden <small>Fortschritt aus Sicherungsdatei wiederherstellen</small></span></button>
+    </div>
+
+    <div class="list">
+      <button class="item" id="mImportList"><span class="ic">➕</span><span class="tx">Neue Vokabelliste importieren <small>dict.cc-Format (.txt), Fortschritt bleibt erhalten</small></span></button>
+    </div>
+
+    <div class="list">
+      <button class="item" id="mInfo"><span class="ic">💾</span><span class="tx">Speicher &amp; Info <small id="storageLine">–</small></span></button>
+      <button class="item danger" id="mReset"><span class="ic">🗑️</span><span class="tx">Alle Fortschritte zurücksetzen</span></button>
+    </div>
+
+    <button class="linkbtn center" id="menuClose" style="display:block;margin:0 auto">Schließen</button>
+  </div>
+</div>
+
+<!-- ============ HELP SHEET ============ -->
+<div id="helpSheet" class="sheet-bg hidden">
+  <div class="sheet help">
+    <div class="grab"></div>
+    <h2>So funktioniert's</h2>
+    <div id="helpBody"></div>
+    <button class="linkbtn center" id="helpClose" style="display:block;margin:6px auto 0">Schließen</button>
+  </div>
+</div>
+
+<input class="filepick" id="fileJson" type="file" accept=".json,application/json">
+<input class="filepick" id="fileList" type="file" accept=".txt,text/plain">
+<div class="toast" id="toast"></div>
+
+<script id="seed" type="text/plain">prevalence	Vorherrschaft {f}
+supremacy	Vorherrschaft {f}
+to elucidate sth.	etw. [Akk.] erläutern
+to abandon sth. [relinquish, e.g. a claim, a right, etc.]	auf etw. [Akk.] verzichten [z. B. auf einen Anspruch, auf ein Recht]
+to renunciate sth. [to formally reject sth. (title, right, violence)]	auf etw. [Akk.] verzichten [etw. förmlich zurückweisen]
+to have to dispense with sb./sth.	auf jdn./etw. verzichten müssen
+to amaze	verwundern
+to antagonize sb.	jdn. verärgern
+to exasperate sb.	jdn. verärgern
+deafening	ohrenbetäubend
+revolting	ekelhaft
+fortune	Vermögen {n}
+to inquire about sb./sth.	sich [Akk.] nach jdm./etw. erkundigen
+to ascertain sth.	etw. [Akk.] feststellen [herausfinden]
+swamped  [fig.]	überfordert
+worn out	abgenutzt
+creased	knittrig
+garish	auffallend
+grubby	schmuddelig [ugs.] [pej.]
+to dispense with sth.	ohne etw. auskommen
+predisposition	Veranlagung {f}
+fiercely	heftig
+lenient	nachsichtig
+marred	beschädigt
+to ratify	bestätigen
+to perpetuate	aufrechterhalten
+gracefully	würdevoll
+sty	Gerstenkorn {n}
+Knock yourself out! [Am.] [coll.] [be my guest]	Tu dir keinen Zwang an! [oft zynisch] [ugs. für: Wenn du (unbedingt) willst, dann tu es doch!]
+to sow	säen
+to subvert	untergraben
+hereditary	erblich
+stratification	Schichtung {f}
+irreverent	respektlos
+agonizing	qualvoll
+pompous [pej.] [pretentious]	wichtigtuerisch [ugs.] [pej.]
+raffle	Gewinnspiel {n}
+contempt	Verachtung {f}
+pretext	Ausrede {f}
+unequivocal	eindeutig
+to caress sb./sth.	jdn./etw. streicheln
+placability	Versöhnlichkeit {f}
+placable	nachgiebig
+obscene	obszön
+inconspicuous	unauffällig
+unobtrusive	unauffällig
+inconceivable	unvorstellbar
+virtuous circle	Aufwärtsdynamik {f}
+to revel in sth.	etw. mit wahrer Wollust tun
+rampant	ungezügelt
+blatant	eklatant [Fehler]
+stirring	zündend [fig.]
+fortitude	Tapferkeit {f}
+sentiment	Stimmung {f}
+encroachment	Übergriff {m}
+preponderance [dominant position]	Übergewicht {n} [Vormachtstellung; größere Bedeutung]
+to curtail sth.	etw. [Akk.] einschränken
+to encompass sb./sth.	jdn./etw. umfassen [einschließen]
+retardation	Verzögerung {f}
+pernicious	schädlich
+peculiar	merkwürdig
+to peculate sth. [formal] [embezzle]	etw. [Akk.] veruntreuen
+to appeal	in die Revision gehen
+remuneration	Vergütung {f}
+wastewater	Abwasser {n}
+sewage	Abwasser {n}
+recognition value	Wiedererkennungswert {m}
+arbitrary	willkürlich
+subject to sth. [revocation, alteration etc.]	vorbehaltlich etw. [Gen.] [schweiz. auch: vorbehältlich]
+injunction	Unterlassungsurteil {n}
+affectionate	liebevoll
+rant	Schimpftirade {f}
+outlet	Steckdose {f}
+insincere	aufgesetzt [geheuchelt]
+delightful	entzückend
+fading	vergänglich
+decimated	dezimiert
+to impede sb./sth.	jdn./etw. behindern
+mindfulness	Aufmerksamkeit {f}
+lead <Pb>	Blei {n} <Pb>
+secession	Abspaltung {f}
+tightness	Straffheit {f}
+to precede	vorangehen
+subservient	untertänig
+inexorably	unaufhaltsam
+inexorability	Unerbittlichkeit {f}
+to recede from a position	von einer Position zurücktreten
+to recede [e.g. troops, glaciers]	sich [Akk.] zurückziehen [z. B. Truppen, Gletscher]
+to immerse	eintauchen
+reasonable [adequate, fair]	zumutbar [Arbeit]
+formidable [impressive]	beeindruckend
+susceptibility	Anfälligkeit {f}
+tenuous	dürftig
+clingy	anhänglich
+desire	Sehnsucht {f}
+yearning	Sehnsucht {f}
+soaring	aufsteigend
+to usurp sth.	sich [Akk.] etw. [Gen.] bemächtigen [geh.]
+to impoverish sb.	jdn. arm machen
+dissimulation	Heuchelei {f} [pej.]
+insulation	Isolierung {f}
+to cut corners [coll.] [fig.]	den einfachsten Weg nehmen
+to remedy a situation	eine Situation retten
+chain store	Handelskette {f}
+conceivable	denkbar
+to alternate	abwechseln
+alternate	abwechselnd
+heatstroke	Hitzschlag {m}
+cooling fan	Ventilator {m}
+to moor	anlegen
+conversely	umgekehrt
+conductor	Leiter {m}
+electorate [treated as sg. or pl.] [voters]	Wählerschaft {f}
+verdict	Urteil {n} [Urteilsspruch]
+wage cut	Lohnkürzung {f}
+to wane	nachlassen
+ligament	Gelenkband {n} [Ligament]
+reversing light [Br.]	Rückfahrscheinwerfer {m}
+groundwater level	Grundwasserpegel {m}
+to wander	wandern
+classifieds	Kleinanzeigen {pl}
+to flourish [business etc.]	gedeihen [florieren]
+general practitioner <GP>	Hausarzt {m}
+adjacent	benachbart
+vicinity	Nähe {f}
+in power	an der Macht
+to serve an apprenticeship	eine Lehrzeit ableisten
+to assemble sth. [e.g. a team, parts for a product]	etw. [Akk.] zusammenstellen
+estate agency [Br.] [company or business]	Immobilienbüro {n}
+rocking chair	Schaukelstuhl {m}
+juvenile delinquent	jugendlicher Straftäter {m}
+prize cup	Siegerpokal {m}
+sprawling	ausgedehnt
+from the ground up	von Grund auf
+atmospheric pressure	Luftdruck {m}
+distorted  [face etc.]	verzerrt
+rook [chess]	Turm {m} [Schach]
+to hoist	heben
+longitude	Längengrad {m}
+to opt for sth.	sich für etw. [Akk.] entscheiden
+hard as nails [fig.]	stahlhart [fig.]
+below freezing (point)	unter (dem) Gefrierpunkt
+capital punishment	Todesstrafe {f}
+to snap up sth. [coll.]	etw. wegschnappen
+solitary confinement	Einzelhaft {f}
+exuberance	Überfluss {m}
+exuberant	überschwänglich
+embankment	Böschung {f}
+impartial	unparteiisch
+dodgy [Br.] [coll.] [person, area, business]	zwielichtig
+to hit the road [idiom]	sich auf den Weg machen
+to go to court	vor Gericht gehen
+intestine	Darm {m}
+to learn the ropes	die Grundlagen lernen
+package holiday [Br.]	Pauschalreise {f}
+state of emergency	Ausnahmezustand {m}
+force majeure	höhere Gewalt {f}
+mountainous	bergig
+taxing	beschwerlich [ermüdend, anstrengend]
+housing	Unterkunft {f}
+behind the scenes [also fig.]	hinter den Kulissen [auch fig.]
+in broad daylight [idiom]	am helllichten Tag [Redewendung]
+to be stroppy with sb. [Br.]	jdm. pampig kommen [ugs.]
+recording studio	Tonstudio {n}
+unbiased	unvoreingenommen
+social security	Sozialversicherung {f} <SV>
+to come to a standstill	zum Stillstand kommen
+intake [of water, electricity etc.]	Aufnahme {f} [Zufuhr]
+upstream	flussaufwärts
+gooseberry [Ribes uva-crispa]	Stachelbeere {f}
+as far as I'm concerned	was mich betrifft
+horseradish [Armoracia rusticana]	Meerrettich {m}
+willing	bereit
+bicycle path	Fernradweg {m}
+to shift	verlagern
+to disrupt	unterbrechen
+apathetic	teilnahmslos
+evaporation	Verdunstung {f}
+blanket of snow	Schneedecke {f}
+towrope	Abschleppseil {n}
+backing vocalist	Begleitsänger {m}
+acute	akut
+swiftly	rasch
+with painstaking accuracy [person, piece of work]	mit peinlicher Genauigkeit
+painstaking	mühevoll
+audacious [daring, rakish]	verwegen
+redcurrant [Ribes rubrum] [also: red currant]	Rote Johannisbeere {f}
+to envisage sth. [contemplate sth.]	etw. [Akk.] ins Auge fassen [Redewendung]
+to keep an open mind	aufgeschlossen bleiben
+to smell a rat [coll.] [idiom]	Verdacht schöpfen
+clap of thunder	Donnerschlag {m}
+fastener	Verschluss {m}
+exasperated	gereizt
+to reach a settlement	eine Einigung erzielen
+disposal	Beseitigung {f}
+flimsy [pej.] [argument, excuse, etc.]	fadenscheinig [fig.] [pej.] [Argument, Ausrede etc.]
+receptive  [to]	empfänglich [für]
+index finger	Zeigfinger {m} [schweiz.] [Zeigefinger]
+cunning	gerissen [ugs.]
+at death's door [idiom]	im Angesicht des Todes [geh.]
+to come by	vorbeikommen
+aggravation	Verschlimmerung {f}
+to be under the weather [coll.] [idiom]	angeschlagen sein [ugs.]
+weak will	Willensschwäche {f}
+intensive care	Intensivpflege {f}
+industrious	fleißig
+bullet train [coll.]	Hochgeschwindigkeitszug {m}
+in line with	übereinstimmend mit [+Dat.]
+to some extent	in gewissem Maß
+indication of	Anzeichen {n} für
+to conclude sth. [a deal, a contract]	etw. [Akk.] abschließen [Handel, Vertrag]
+to conclude sth.	etw. [Akk.] schlussfolgern
+against the clock [fig.]	gegen die Zeit
+to add insult to injury [idiom]	das Ganze (nur) noch schlimmer machen
+once in a blue moon [coll.] [idiom]	alle Jubeljahre [ugs.] [Redewendung]
+to cast off [also naut.]	ablegen [Kleidung, Gewohnheiten, etc. auch naut.]
+consecutive	aufeinanderfolgend
+term of office	Amtsdauer {f}
+sliding door	Schiebetür {f}
+admission requirement	Zulassungsbedingung {f}
+census	Volkszählung {f}
+sales figures	Umsatzzahlen {pl}
+stomach upset	Bauchschmerz {m}
+to conduct negotiations	Verhandlungen führen
+wheels {pl} [coll.] [motorised transport]	fahrbarer Untersatz {m} [ugs.]
+stroke	Schlaganfall {m}
+lack of evidence	Beweismangel {m}
+handrail	Geländer {n} [an Treppen, Brücken, Balkonen]
+outskirts {pl} [less common {sg}]	Stadtrand {m}
+hot-tempered	heißblütig
+advancement	Weiterentwicklung {f}
+pretentious	angeberisch [ugs.]
+discerning [customer etc.]	anspruchsvoll
+magistrate	Friedensrichter {m}
+tax cuts	Steuersenkungen {pl}
+to slam on the brakes	in die Eisen gehen [ugs.]
+eardrum [tympanic membrane]	Trommelfell {n}
+to emit [heat, radiation, a sound]	abgeben [Wärme, Strahlung, ein Geräusch]
+to emit sth. [light, radiation etc.]	etw. [Akk.] ausstrahlen
+Time will tell. [idiom]	Die Zeit wird es zeigen. [Redewendung]
+old hat [fig.] [old news]	kalter Kaffee {m} [fig.] [Schnee von gestern, alter Hut, nichts Neues]
+bed of roses [fig.]	Zuckerschlecken {n} [fig.]
+holiday pay	Urlaubsgeld {n}
+eager beaver [coll.]	Streber {m}
+to pick a lock [coll.]	ein Schloss knacken [ugs.]
+ulcer	Geschwür {n}
+to break the law	das Gesetz brechen
+provisional government	Übergangsregierung {f}
+jolly	vergnügt
+courageous	mutig
+handbrake [esp. Br.]	Handbremse {f}
+circumnavigation	Umrundung {f}
+advertising poster	Werbeplakat {n}
+conception	Konzept {n}
+sensible	vernünftig
+fuddy-duddy  [coll.]	muffelig [ugs.]
+crops	Feldfrüchte {pl}
+vibrant	lebhaft
+to relieve sb. of sth. [esp. an office, a task]	jdn. etw. [Gen.] überheben [veraltend] [entheben]
+humility	Bescheidenheit {f}
+trout [common use]	Forelle {f} [nicht fachspr.]
+irreparable	irreparabel
+ironing board	Bügelbrett {n}
+ill manners	schlechte Manieren {pl}
+mountain chain	Bergkette {f}
+influential	einflussreich
+resourceful	einfallsreich
+airplay	Sendezeit {f}
+solicitor [Br.]	Anwalt {m} [vor niederen Gerichten]
+to devise sth.	etw. [Akk.] entwickeln
+curb [Am.]	Bordstein {m}
+to become extinct	aussterben
+vocational training	Berufsbildung {f}
+managerial position	Führungsposition {f}
+chairman <chair, chm.>	Vorsitzender {m} <Vors.>
+to outweigh sth.	etw. [Akk.] überwiegen
+coastal	küstennah
+luggage cart [esp. Am.]	Gepäckwagen {m} [Kofferkuli]
+customs declaration	Zollerklärung {f}
+customs {pl}	Zoll {m}
+unprecedented	beispiellos
+drastic	drastisch
+intrusive	aufdringlich
+dipped	eingetaucht
+peninsula	Halbinsel {f}
+dipped headlights	Fahrtlicht {n}
+headlights	Scheinwerfer {pl}
+dimmed headlights {pl} [Am.]	Abblendlicht {n}
+finite	endlich
+skilled worker	Facharbeiter {m}
+trachea	Luftröhre {f}
+stimulus	Anregung {f}
+bladder	Blase {f}
+ski poles	Skistöcke {pl}
+to deplete	aufbrauchen [Bestände]
+remedy	Heilmittel {n}
+to faff about / around [coll.] [Br.]	Zeit vertrödeln
+tripod	Stativ {n} [Dreibein]
+by the time	als
+staggering	überwältigend
+office holder	Amtsträger {m}
+weathering	verwitternd
+shock absorber	Stoßdämpfer {m}
+roe deer {pl}	Rehwild {n}
+instinctive	instinktiv
+life imprisonment	lebenslange Haft {f}
+rear view mirror	Rückblickspiegel {m}
+to put on airs [idiom]	sich [Akk.] aufspielen
+silver lining [fig.]	Lichtblick {m} [fig.]
+to cry over sb.	um jdn. weinen
+liable	haftbar
+extroverted	extrovertiert
+versatile	vielseitig
+to be on the mend [idiom]	auf dem Weg / Wege der Besserung sein [Redewendung]
+manual transmission	Schaltgetriebe {n}
+blood vessel	Blutgefäß {n}
+to surge	steil ansteigen
+wind instrument	Blasinstrument {n}
+to enlarge	ausdehnen
+illiterate	analphabetisch
+whereas	wohingegen
+to shop around	Preise vergleichen
+multiculturalism	Multikulturalismus {m}
+repercussion	Auswirkung {f}
+research facilities	Forschungseinrichtungen {pl}
+abyss	Abgrund {m}
+inquisitive	inquisitiv [geh.]
+decisive	ausschlaggebend
+coherent	kohärent
+job fair	Jobbörse {f}
+to summarize sth.	etw. zusammenfassen
+convention	Versammlung {f}
+cutting-edge	topaktuell
+cheeky	frech
+hummingbird [family Trochilidae]	Kolibri {m}
+headrest	Kopfstütze {f}
+tax evasion	Steuerhinterziehung {f}
+apparel [Am.] [Br. formal]	Kleidung {f}
+to be up and about [after an illness; after sleep]	wieder auf den Beinen sein [wieder gesund sein; wieder auf sein]
+parallel bars	Parallelbarren {m}
+enthralled	begeistert
+tuning fork	Stimmgabel {f}
+imminent	bevorstehend
+walks of life	soziale Schichten {pl}
+heat haze	Hitzeschleier {m} [vor Hitze flimmernde Luft]
+sleeping pill	Schlafmittel {n}
+sabre [esp. Br.]	Säbel {m}
+knowledgeable	sachkundig
+empathetic	einfühlsam
+blatant	unverblümt
+blatant	offensichtlich
+to stand out	herausragen
+Kudos!	Hut ab!
+big time [coll.]	spitzenmäßig [ugs.]
+Chill out! [coll.]	Beruhige dich!
+studious	fleißig
+to leg it [Br.] [coll.] [to run away]	die Beine in die Hand nehmen [ugs.] [Redewendung]
+bedside table	Nachttisch {m}
+universal suffrage	allgemeines Wahlrecht {n}
+outcome {sg}	Ergebnisse {pl} [insgesamt]
+guardian	Vormund {m}
+lawnmower	Rasenmäher {m}
+street vendor	Straßenhändler {m}
+appealing	reizvoll
+ermine [fur]	Hermelin {m} [Pelz]
+chronologically	chronologisch
+collarbone	Schlüsselbein {n}
+hard work	harte Arbeit {f}
+to listen in on sb./sth.	jdn./etw. belauschen
+interchangeably	(untereinander) austauschbar
+seafaring	Seefahrt {f}
+cold spell	Kältewelle {f}
+braces [Br.]	Hosenträger {pl}
+to put it another way	anders gesagt
+controversy {sg}	Kontroversen {pl} [kollektiv]
+ecstatic	ekstatisch
+prefabricated	vorgefertigt
+caterpillar [insect]	Raupe {f}
+to haggle	feilschen
+to plummet	abstürzen
+toll road	Mautstraße {f}
+to pinpoint sth.	etw. [Akk.] genau bestimmen
+converse	umgekehrt
+exposure time	Belichtungsdauer {f}
+perjury	Meineid {m}
+narcissistic	selbstverliebt
+renewable resource	nachwachsender Rohstoff {m}
+visor	Visier {n}
+to plead guilty	sich schuldig bekennen
+means of communication	Kommunikationsmittel {n}
+witty	geistreich
+to burn the midnight oil	bis spät in die Nacht hinein arbeiten
+labourer [Br.]	Hilfsarbeiter {m}
+mince [esp. Br.]	Hackfleisch {n}
+to extenuate	mildern
+extenuating circumstances	mildernde Umstände {pl}
+tenant	Mieter {m}
+to pop in [coll.]	kurz reinschauen
+to come up [carreerwise]	emporkommen [geh.]
+to come up [for discussion]	zur Sprache kommen
+distinct from sb./sth. [pred.] [different]	von jdm./etw. verschieden [unterschiedlich]
+to cram	stopfen
+to flog sth. [Br.] [coll.]	etw. [Akk.] verhökern [ugs.]
+to nosh [coll.]	futtern [ugs.] [essen]
+wonky  [coll.]	wackelig
+undoubtably  [obs.]	zweifelsohne
+second to none	unvergleichlich
+resemblance	Ähnlichkeit {f}
+disastrous	verheerend
+medicinal herbs	Heilkräuter {pl}
+however much	ganz egal wie viel
+peck [strike with the beak]	Schnabelhieb {m}
+peck [coll.]	Kuss {m} [flüchtiger Kuss]
+namely	nämlich
+quick as lightning [fig.]	schnell wie der Blitz [fig.]
+ahead of time	der Zeit voraus
+a piece of cake [coll.]	ein Kinderspiel {n}
+to put off	aufschieben
+I am all run down.	Ich bin fix und fertig. [erschöpft]
+to take up [rope in a coil]	aufwickeln
+mantis	Gottesanbeterin {f}
+estuary	Mündung {f} [Trichtermündung]
+hydrogen <H>	Wasserstoff {m} <H>
+laxative	abführend
+churlish	ungehobelt
+greasy	fettig
+courteous	höflich
+boisterous	stürmisch
+travel expenses	Reisekosten {pl}
+probation	Bewährung {f}
+probation	Probezeit {f}
+career ladder	Karriereleiter {f}
+hourly wage	Stundensatz {m}
+shift work	Schichtarbeit {f}
+airy	luftig
+occupant	Bewohner {m}
+to demolish	abreißen [demolieren]
+solemnly	feierlich
+defiantly	trotzig
+blissfully	glückselig
+Brussels sprout [Brassica oleracea var. gemmifera]	Rosenkohl {m}
+asparagus [Asparagus officinalis]	Spargel {m} [südd., schweiz. auch {f}]
+tinned food	Dosennahrung {f}
+pike [Esox lucius]	Hecht {m}
+It slipped my mind. [idiom]	Es ist mir entfallen. [Ich habe es vergessen]
+on the edge	am Rande
+recreational	der Erholung dienend
+strike [industrial action]	Streik {m}
+turnover of staff	Personalfluktuation {f}
+deduction	Abzug {m} [v. Lohn etc.]
+division of labor [Am.]	Arbeitsteilung {f}
+period of notice	Kündigungsdauer {f}
+fringe benefit	Nebenleistung {f}
+malfeasance	Dienstvergehen {n}
+inexorable	unerbittlich
+demise [of an institution, empire etc.]	Niedergang {m}
+to be beat-up [coll.] [be in a state of disrepair]	abgefuckt sein [ugs.] [derb] [total heruntergekommen sein]
+to come to a standstill	stecken bleiben
+strain [muscular]	Zerrung {f} [eines Muskels]
+inflammation	Entzündung {f}
+appealing	ansprechend
+to surge [demand, prices etc.]	(stark) ansteigen
+distinct	deutlich
+to deter sb. from doing sth.	jdn. abschrecken, etw. zu tun
+means of advertising	Werbemittel {n}
+to rattle sb./sth.	jdn./etw. erschüttern
+to affirm	vergewissern
+to surge	anbranden [Woge, Wasser]
+exclamation point <!> [Am.]	Ausrufezeichen {n} <!>
+to make amends for sth. [idiom]	etw. [Akk.] wiedergutmachen
+flustered	durcheinander [nur prädikativ] [Person]
+elusive	schwer fassbar
+fortuitous [by chance]	zufällig
+subsistence	Existenz {f}
+bounty	Belohnung {f}
+inherent (in)	eigen [charakteristisch, typisch]
+inherent	angeboren
+strife	Konflikt {m}
+to languish [grow weak]	ermatten [geh.] [schlapp werden, matt werden]
+peasant [attr.]	bäuerlich
+to exert	ausüben
+fickle	launisch
+sacred	heilig
+fierce	heftig
+at this juncture	an dieser Stelle
+juncture	kritischer Augenblick {m}
+meager  [Am.]	dürftig
+to dismantle sth.	etw. abbauen [demontieren]
+virtuous	tugendhaft
+to culminate	den Höhepunkt erreichen
+to spawn sth. [to cause to come into existence]	etw. [Akk.] hervorbringen [entstehen lassen]
+egregious [formal]	ungeheuerlich
+to secede	sich losmachen
+to preside	vorsitzen
+lamentable	bedauernswert
+nascent	aufkommend
+to harness sth. [make use of]	etw. [Akk.] nutzen
+congestion	Verstopfung {f}
+inimical [to]	nachteilig [für]
+impecunious	mittellos
+profligate [recklessly prodigal or extravagant]	verschwenderisch
+divergent	auseinandergehend
+divergence	Abweichung {f}
+to diverge	auseinanderklaffen
+to diverge (from)	sich entfernen (von)
+to besiege	belagern
+to abdicate	aufgeben
+prelude	Vorspiel {n}
+proprietor	Eigentümer {m}
+to resort to sth.	zu etw. [Dat.] greifen
+to cajole	[schmeichelnd] betteln
+mutiny	Meuterei {f}
+to dither	herumeiern [ugs.] [sich nicht entscheiden können]
+assertiveness	Durchsetzungsvermögen {n}
+superimposed by	überlagert von [neuen Problemen]
+sought	gesucht
+zeal	Eifer {m}
+apprehension	Befürchtung {f}
+to compile	zusammensetzen
+to oblige sb./sth.	jdn./etw. verpflichten
+disparate	ungleich
+ineptitude	Ungeeignetheit {f}
+to grease	einfetten
+to grease sb. [coll.] [bribe]	jdn. bestechen
+expropriation	Enteignung {f}
+trajectory	Flugbahn {f}
+trajectory	Entwicklungsverlauf {m}
+to delve into sth.	sich tief eingraben
+pundit	Experte {m}
+eradicated	ausradiert
+immutable	unveränderbar
+to oust sb.	jdn. vertreiben [aus Amt, Stellung]
+to ignite sth. [also fig.]	etw. [Akk.] entzünden [geh. auch fig.]
+fervor [Am.]	Eifer {m}
+to tilt sth.	etw. [Akk.] neigen [kippen]
+hitch [problem]	Haken {m} [fig.]
+obnoxious	unerträglich [unausstehlich]
+to take the plunge [coll.] [idiom]	den Schritt tun [z. B. zu heiraten]
+demeanor [Am.]	Auftreten {n}
+nuanced	differenziert
+disingenuous	unaufrichtig
+descent [ancestry]	Abstammung {f}
+tubby  [coll.]	rundlich
+ado	Aufhebens {n}
+pudgy [coll.]	pummelig [ugs.]
+to overdrive	übersteuern
+obnoxious	widerlich
+to run errands	Besorgungen machen
+to befall	befallen
+to be dismissed summarily	fristlos entlassen werden
+regardless of sth.	von etw. [Dat.] unabhängig
+delusion	Einbildung {f}
+cursory	flüchtig
+wuss [coll.]	Weichei {n} [ugs.]
+fateful	verhängnisvoll
+sprained	verstaucht
+breezy	lebhaft
+grace [gracefulness]	Anmut {f}
+exasperated	verzweifelt
+nostril	Nasenloch {n}
+to reprieve sb. [Br.] [commute a condemned man's sentence]	jdn. begnadigen
+levitating	frei schwebend
+proficient	sachkundig
+to run errands	Botengänge machen
+tweezer [Am.] [pair of tweezers]	Pinzette {f}
+to disperse	auseinandergehen [z. B. Menge]
+seizure	Anfall {m}
+horrendous	horrend
+to carry over [parts from an old model, version, car, etc.]	übernehmen
+to take over [e.g. data, images, values]	übernehmen
+exuberant	üppig
+treadmill	Laufband {n}
+limber	biegsam
+repulsion	Widerwille {m}
+to retrieve	abrufen
+to retrieve	abfragen
+to account for sb.	für jdn. geradestehen
+obscurity	Unklarheit {f}
+to sink into oblivion [idiom]	in Vergessenheit geraten
+to vanish into oblivion [idiom]	in Vergessenheit geraten
+to fade into obscurity	in Vergessenheit geraten
+to fall into oblivion	in Vergessenheit geraten
+to press charges	Anklage erheben
+abatement	Ermäßigung {f}
+felony	Verbrechen {n}
+to mortify sb.	jdn. demütigen
+to aggravate sth. [worsen]	etw. [Akk.] verschlimmern
+to remand sth.	etw. zurückschicken
+indictment	Anklage {f}
+grand larceny	schwerer Diebstahl {m}
+imprudent	leichtsinnig
+endeavor [Am.]	Unterfangen {n}
+indifferent [not important or interesting]	gleichgültig
+articulate	wortgewandt
+to enunciate sth.	etw. [Akk.] artikulieren
+endearing	liebenswert
+indigent	bedürftig
+spitefulness	Schadenfreude {f}
+to deprive sb. of sth.	jdm. etw. vorenthalten
+petrified  [fig.]	gelähmt
+courtesy	Höflichkeit {f}
+shallow  [fig.]	oberflächlich [fig.]
+objection	Widerspruch {m}
+dissent	Widerspruch {m}
+contradiction	Widerspruch {m}
+in disbelief	fassungslos
+to wreak havoc	verheerende Schäden anrichten
+afraid	besorgt
+apprehensive	besorgt
+anxious	besorgt
+apprehension	Besorgnis {f}
+to indulge in sth.	etw. [Akk.] genießen
+lapse	Fehltritt {m}
+warrant of arrest	Haftbefehl {m}
+detention order	Haftbefehl {m}
+to patch sth. [mend, strengthen]	etw. ausbessern
+indignant about sb./sth.	über jdn./etw. entrüstet
+indignant	empört
+sentimentality	Rührseligkeit {f}
+to sneer (at sb./sth.)	(jdn./etw.) verhöhnen
+to smile at sth.	etw. belächeln
+to omit sth. [miss, fail to do]	etw. [Akk.] versäumen
+tetchy	gereizt
+irritated	gereizt
+irritable	gereizt
+resentful	gereizt
+contingency	Eventualfall {m}
+traitorous	verräterisch
+treacherous	verräterisch
+reportedly	angeblich
+mental	seelisch
+to allege	eine Behauptung aufstellen
+allegedly	angeblich
+quality [high standard]	Format {n} [hohes Niveau]
+to quake	beben
+to convulse [e.g. in pain]	sich krümmen [z. B. vor Schmerzen]
+complement	Ergänzung {f}
+to repel	abstoßen
+saucy	aufreizend [Kleidung, Pose etc.]
+It is to be regretted that ...	Es ist bedauerlich, dass ...
+alarming	besorgniserregend
+unfortunate [regrettable]	bedauerlich
+deplorable	bedauerlich
+to interfere	dazwischenkommen
+to mediate (sth.) [arbitrate, act as intermediary]	(etw. [Akk.]) vermitteln [(etw.) schlichten, (für etw.) als Mittler fungieren]
+pagination	Seitenumbruch {m}
+(much) longed for	lang ersehnt
+long-awaited	lang ersehnt
+resolution	Vorsatz {m}
+hideousness	Abscheulichkeit {f}
+terrific [coll.] [excellent]	fantastisch
+grit [gravel]	Kies {m}
+moody	launisch
+hasty	hastig
+to hit it off with sb.	sich [Akk.] mit jdm. gut verstehen
+to warrant sb. [give authority, power]	jdn. bevollmächtigen
+glance	Blick {m} [kurz, flüchtig]
+rescission	Widerruf {m}
+to rescind sth.	etw. [Akk.] stornieren
+cowardice	Feigheit {f}
+composure	Fassung {f} [Selbstbeherrschung]
+composed [serenely self-possessed]	gelassen [ruhig und entspannt, gefasst]
+intersection [set theory]	Schnittmenge {f} [Mengenlehre]
+to surrogate [replace]	ersetzen
+to oppress sb.	jdn. unterdrücken
+to suppress sth. [end, forbid]	etw. [Akk.] abklemmen [schweiz.] [unterdrücken, beenden, verbieten]
+to banish	vertreiben
+to deport	vertreiben [deportieren, ausweisen]
+to dispel sth. [sb's doubts, worries, etc.; clouds, etc.]	etw. [Akk.] vertreiben [jds. Zweifel, Sorgen etc.; Wolken etc.]
+deceptive	irreführend
+uncompromising	rücksichtslos
+ruthless	rücksichtslos
+to elicit sth.	etw. [Akk.] hervorrufen
+to originate sth. [cause]	etw. verursachen
+(legal) disclaimer	Haftungsausschluss {m}
+disclaimer	Ausschlussklausel {f}
+to disclaim	ablehnen
+drain	Abfluss {m}
+alteration	Änderung {f}
+to atone	büßen
+to dispossess sb.	jdn. enteignen [jdm. etw. wegnehmen, jdn. (seines Besitzes) berauben]
+deficiencies	Mängel {pl}
+to be touched [emotionally]	gerührt sein [emotional]
+to not be on speaking terms (with each other) [idiom]	zerstritten sein
+haughty	arrogant
+imbalance	Schieflage {f}
+to file a suit	klagen
+to go to law	klagen
+to rock sb./sth. [shake, convulse]	jdn./etw. erschüttern
+debris {sg}	Trümmer {pl}
+untactful	taktlos
+tactless	taktlos
+condescending	herablassend
+to die of laughter	sich tot lachen
+to peek	gucken [ugs.]
+unbridled	ungezügelt
+free from restraints	hemmungslos
+consolation	Trost {m}
+eager	begierig
+retaliation	Vergeltung {f}
+to retaliate	Vergeltung üben
+to do without	entbehren können
+glorious [victory, deed etc.]	ruhmreich
+unconscious	bewusstlos
+to premise sth.	etw. [Akk.] voraussetzen
+serenity	Gelassenheit {f}
+to internalize sth.	etw. verinnerlichen
+to put sb. at a disadvantage	jdn. benachteiligen
+to discriminate against sb.	jdn. benachteiligen
+to disadvantage sb./sth.	jdn./etw. benachteiligen
+to fall short [idiom]	zurückbleiben
+surge	Anstieg {m}
+to drain	entleeren
+to dilute sth. [also fig.]	etw. [Akk.] verwässern [auch fig.]
+to captivate sb. (with sth.)	jdn. faszinieren (mit etw. [Dat.])
+discontent	Unmut {m}
+objectionable	verwerflich
+condemnable	verwerflich
+reprehensible	verwerflich
+to hope in vain	vergeblich hoffen
+to reciprocate sth. [sb.'s feelings, a favour, etc.]	etw. [Akk.] erwidern [jds. Gefühle, einen Gefallen etc.]
+none the less	nichtsdestoweniger
+fondly	lieb
+to bog down	im Morast versinken
+crater	Krater {m}
+culpable	strafbar
+to obstruct	behindern
+impunity	Straffreiheit {f}
+crafty	listig
+pretentious	überheblich
+to loot	plündern
+to plunder	plündern
+remorse	Reue {f}
+longing	sehnsüchtig
+to let oneself in for sth.	sich auf etw. [Akk.] einlassen
+to get involved with sb./sth.	sich auf jdn./etw. einlassen
+to cast off	losmachen
+to vindicate	rechtfertigen
+to expel sb.	jdn. ausschließen [aus einer Gemeinschaft]
+expulsion	Ausschluss {m}
+vindictive	nachtragend
+defamation (of character)	Rufmord {m}
+clarity [unambiguousness]	Eindeutigkeit {f}
+to embark  [go on board of a boat / ship or aircraft]	einsteigen [in ein Boot / Schiff oder Flugzeug]
+fallacy	Trugschluss {m}
+to hamper sb.	jdn. behindern
+to exacerbate sth.	etw. [Akk.] verschlimmern
+to go in debt	sich verschulden
+to encumber with debts	verschulden
+merit	Verdienst {n} [Anspruch auf Anerkennung]
+to pummel	verprügeln
+incline	Gefälle {n}
+conceivability	Fassbarkeit {f}
+kickback	Provision {f}
+to commission sb.	jdn. beauftragen
+abomination	Grässlichkeit {f}
+to abominate	verabscheuen
+resentful	nachtragend
+abominable	abscheulich
+to solicit	dringend erbitten
+to quiver	zittern
+conspicuous	auffällig
+to rescind sth. [a law, an order, an agreement, etc.]	etw. aufheben [widerrufen (ein Gesetz, eine Anordnung, eine Vereinbarung etc.)]
+rescission	Rücktritt {m}
+merely	lediglich
+to repulse	zurückstoßen
+precedence	Priorität {f}
+crucial [decisive]	entscheidend
+to annihilate sb./sth.	jdn./etw. vernichten
+to preempt	vorwegnehmen
+to preempt sb./sth.	jdm./etw. zuvorkommen
+retribution	Strafe {f}
+taunt	Spott {m}
+in disbelief	ungläubig
+acquaintance	Bekanntschaft {f}
+disposition	Veranlagung {f}
+to precede sth. [in importance]	etw. [Dat.] vorgehen [wichtiger sein]
+to dispatch	entsenden
+atrocity	Gräueltat {f}
+to harrow sb.	jdn. quälen
+to anguish	peinigen
+to distress sb.	jdn. bekümmern
+outburst of fury	Wutausbruch {m}
+access of fury	Wutanfall {m}
+in a fury	wutentbrannt
+to take precedence over sth.	etw. [Dat.] vorgehen [Vorrang vor etw. haben]
+to churn sth. [stir or agitate vigorously]	etw. [Akk.] aufwühlen [aufrühren]
+contingent	bedingt
+to pertain to sb./sth.	jdn./etw. betreffen
+savvy  [coll.]	clever
+disposition	Einstellung {f} [Veranlagung]
+revocation	Aberkennung {f}
+to pervade	durchdringen
+pervasion	Verbreitung {f}
+pervasive	beherrschend
+to persevere	durchhalten
+perseverance	Ausdauer {f}
+persistence	Ausdauer {f}
+to sprinkle sth. on sth.	etw. über etw. [Akk.] streuen
+to strew	streuen
+suffrage	Wahlrecht {n}
+ailing	kränklich
+to attenuate	abschwächen
+to resonate	harmonisieren
+imposition	Zumutung {f}
+to skim sth. [floating matter]	etw. abschöpfen
+delinquent	Täter {m}
+unendurable	unerträglich
+outrage	Gewalttat {f}
+dangerous to life	lebensgefährlich
+life-threatening	lebensgefährlich [Krankheit]
+danger to life	Lebensgefahr {f}
+grave	ernst [gewichtig, bedrohlich]
+equitable	gerecht
+to abhor sb./sth.	jdn./etw. verabscheuen
+abhorrent	abscheulich
+to expel sb. [e.g. from his / her homeland]	jdn. vertreiben [z. B. aus seinem / ihrem Heimatland]
+weary	erschöpft
+to dispute sth. [argue against]	etw. [Akk.] bestreiten [leugnen]
+sketchy [Am.] [Can.] [coll.] [questionable, disreputable]	zweifelhaft [bedenklich] [Gegend, Freunde etc.]
+prudent	vernünftig
+to rejoice	jubeln
+tenure [office period]	Amtszeit {f}
+to disguise	verbergen
+to dazzle	blenden
+to come to a head [idiom]	sich zuspitzen
+to surpass	übertreffen
+to swear by sb./sth. [coll.] [place great confidence in]	auf jdn./etw. schwören [überzeugt sein von]
+editable	editierbar
+proportionality	Verhältnismäßigkeit {f}
+unilateral	einseitig
+one-way [attr.]	einseitig [in eine Richtung]
+to elapse	verstreichen [Zeit]
+skirmish	Gerangel {n}
+to disapprove	missbilligen
+to disappreciate	missbilligen
+to put sb. on trial for sth.	jdn. wegen etw. [meist Gen., auch Dat.] anklagen
+to charge sb. with sth.	jdn. wegen etw. [meist Gen., auch Dat.] anklagen
+conducive (to sth.)	(etw. [Dat.]) förderlich
+itinerary	Reiseplan {m}
+encore	Zugabe {f}
+numb	betäubt
+to encumber sb. with sth.	jdm. etw. aufbürden [geh.]
+to encumber	belasten
+to pull sth. (off) [coll.] [perform successfully]	etw. schaffen [zuwege bringen, bewerkstelligen]
+to get off the ground again	wieder in Gang kommen
+simply	schlichtweg
+seal	Dichtung {f}
+to seal	verschließen
+persuasiveness	Überzeugungskraft {f}
+off the cuff [coll.] [without preparation, extemporaneously]	aus dem Stand [ugs.] [aus dem Stegreif]
+excruciatingly	unerträglich
+to excruciate	quälen
+enrichment	Bereicherung {f}
+to relate to sb. [feel involved or connected with]	eine Beziehung zu jdm. haben
+to relate to	nachempfinden [Text, Musik]
+to relate [establish relation or connection between]	einen Zusammenhang herstellen zwischen
+to do sth. in spite	etw. aus Gehässigkeit tun
+out of spite	aus Boshaftigkeit
+from spite	aus Gehässigkeit
+judicious	umsichtig
+benevolent	gütig
+inevitably	zwangsläufig
+petulant	launisch
+deceit	Täuschung {f} [Betrug, Irreführung]
+deliberate	wohlerwogen
+sophisticated [high-class, highbrow]	anspruchsvoll [Lektüre etc.]
+sophisticated [advanced, e.g. technology]	hochentwickelt [Methode, Technik etc.]
+cutting-edge	innovativ
+to imply that ...	darauf schließen lassen, dass ...
+outstanding	hervorragend
+to dangle	baumeln
+daunting	beängstigend
+deterrent	abschreckend
+to act as a deterrent	abschreckend wirken
+to amplify	ausschmücken
+to embellish	ausschmücken
+spiteful	gehässig
+to feel (like) less of a person	sich minderwertig fühlen
+inconsiderate	rücksichtslos
+to clear sb. of a charge	jdn. entlasten
+to relieve pressure on sth.	etw. entlasten
+to clear of blame	entlasten
+rigid	unbeweglich
+rigid	starr
+eligibility	Berechtigung {f}
+to be in violation of sth.	gegen etw. [Akk.] verstoßen
+to defy sth. [rule, law etc.]	gegen etw. [Akk.] verstoßen
+to recondition sth.	etw. wiederherstellen [in Stand setzen, reparieren]
+to recover sth. [e.g. data, files]	etw. [Akk.] wiederherstellen [z. B. Daten]
+to restore sth.	etw. wiederherstellen
+to recreate sth.	etw. wiederherstellen
+to retrieve sth. [information, data]	etw. wiederherstellen
+to elaborate	genau darlegen
+to call it a day [coll.] [idiom]	Feierabend machen
+to blast sth.	etw. in die Luft sprengen
+blast	Explosion {f}
+blast [Am.] [coll.] [enjoyable experience]	Wahnsinnsspaß {m} [ugs.]
+bumpy [road, path, etc.] [also fig.]	holprig [Straße, Weg etc.] [auch fig.]
+brace [football]	Doppelschlag {m}
+rascal	Halunke {m}
+to disparage sb./sth.	jdn./etw. verunglimpfen [geh.]
+lighthearted [carefree]	unbeschwert
+carefree	unbeschwert
+towed away	abgeschleppt
+to advocate	vertreten
+to unravel [fig.]	aus den Fugen geraten [Redewendung]
+to unravel sth. [disentangle]	etw. entwirren
+to conjecture	vermuten
+to slacken sth.	etw. [Akk.] lockern
+agony	Qual {f}
+cautious	achtsam
+self-retaining	selbsthaltend
+to ascertain sth.	etw. ermitteln
+to resume sth.	etw. [Akk.] fortsetzen
+odious	abscheulich
+constituents	wesentliche Bestandteile {pl}
+to slumber	schlummern [geh.]
+reprisal	Vergeltungsmaßnahme {f}
+to soft-soap [coll.]	Süßholz raspeln [ugs.]
+to appeal [request for aid, support]	bitten
+to cease sth.	etw. [Akk.] einstellen [beenden]
+flamboyant	extravagant
+nauseous	widerlich
+to be out of one's mind [coll.] [idiom]	verrückt sein
+to contemplate	erwägen
+to lash out at sb.	auf jdn. losgehen
+upset	bestürzt
+gloomy	düster
+mournful	schwermütig
+hideous	abscheulich
+dismantling [buildings, scaffolds, etc.]	Abbau {m} [Gebäude, Gerüste etc.]
+devastated	am Boden zerstört
+deluded	voller Illusionen [nachgestellt]
+to infuse	durchziehen lassen
+clandestine	geheim
+to avert sth.	etw. [Akk.] abwenden
+nauseous	übel
+resentment	Feindseligkeit {f}
+to reiterate	wiederholen
+to convey sth. [an impression, an idea, a feeling, etc.]	etw. [Akk.] vermitteln [einen Eindruck, eine Vorstellung, ein Gefühl etc.]
+descendant	Nachkomme {m}
+to restrain sb./sth.	jdn./etw. zurückhalten
+Restrain yourself!	Beherrsch dich!
+to linger over sth.	bei etw. [Dat.] verweilen
+to dawdle [waste time; be slow]	trödeln [ugs.] [Zeit verschwenden; langsam sein]
+horrifying	entsetzlich
+to stratify sth.	etw. [Akk.] schichten
+to reprieve sb. [fig.]	jdn. verschonen
+pardon	Begnadigung {f}
+to invoke sth.	etw. [Akk.] beschwören [Geister etc.]
+junk	Schrott {m} [ugs.]
+temporary contract	befristeter Vertrag {m}
+short-term contract	befristeter Vertrag {m}
+to uphold	aufrechterhalten
+to bear sth. with fortitude	etw. mit Fassung tragen
+to take sth. calmly	etw. [Akk.] mit Fassung tragen
+to trip over one's tongue	sich versprechen
+to trip over sb./sth.	stolpern über jdn./etw.
+to quarrel	streiten
+notorious	berüchtigt
+to get cheeky	frech werden
+inquisitive [for knowledge]	wissbegierig
+grease	Fett {n}
+to grease sth.	etw. schmieren
+to assent	zustimmen
+slump	Konjunkturrückgang {m}
+slump	Sturz {m} [Zusammensinken] [fig. auch: Rückgang]
+expediency	Zweckmäßigkeit {f}
+eloquence	Redegewandtheit {f}
+malicious	bösartig
+gleeful  [maliciously]	schadenfroh
+dull [esp. pain, sound]	dumpf [bes. Schmerz, Ton]
+ostentatious	prahlerisch
+to accord with	zustimmen
+eager for sth.	gierig auf etw. [Akk.]
+windowsill	Fensterbank {f}
+to resist arrest	sich [Akk.] der Festnahme widersetzen
+disobedience	Ungehorsam {m}
+sore  [hurting]	wund
+to acquaint sb. with sb. [introduce]	jdn. mit jdm. bekanntmachen
+to acquaint oneself	sich [Akk.] kundig machen
+to dread sb./sth.	jdn./etw. fürchten
+to rummage	durchstöbern
+sketchy	dürftig [Kenntnisse]
+to wince	zusammenzucken
+to converge on a place	an einem Ort zusammenkommen
+to converge	sich [Akk.] annähern
+to relent	nachgeben
+relentless	unbarmherzig
+rock bottom	Tiefpunkt {m}
+to lie in ambush	im Hinterhalt lauern
+to lie in ruins	in Trümmern liegen
+indispensable	unverzichtbar
+demonstration effect	Vorführeffekt {m}
+pretension	Überheblichkeit {f}
+pretentious	hochtrabend
+attire	Tracht {f}
+to deem sb./sth. ...	jdn./etw. für / als ... erachten [geh.]
+to deem sth. ...	etw. [Akk.] für ... halten
+bleak	trostlos
+to collide	zusammenstoßen
+consensual	einvernehmlich [geh.]
+to knock over	umstoßen
+obtuse	stumpfsinnig
+hollow	hohl
+to recline sth.	etw. zurücklegen [Lehne etc.]
+captivating	fesselnd [faszinierend]
+wimp [coll.]	Weichei {n} [ugs.]
+to resent doing sth.	es hassen, etw. zu tun
+to resent	übelnehmen
+incorrectly produced	fehlerhaft hergestellt
+flawed	fehlerhaft
+deficient	mangelhaft
+to lash sb.	jdn. auspeitschen
+to lash back	festbinden
+to conceive sth. [comprehend]	etw. begreifen
+to concede	eingestehen
+to concede defeat	sich [Akk.] geschlagen geben
+to dodge around	umspielen
+exuberant	ausgelassen
+exuberance	Ausgelassenheit {f}
+versatile	vielseitig einsetzbar
+misted up	beschlagen [Glas, Fenster]
+steamed up	beschlagen [Glas, Fenster]
+steamy [window, glass]	beschlagen [Glas]
+fogged	beschlagen [Brille, Fenster]
+pecuniary	finanziell
+benign	harmlos
+to sink sth.	etw. [Akk.] versenken
+to render sb. sth. [e.g. a favour]	jdm. etw. [Akk.] erweisen [zuteilwerden lassen] [z. B. einen Dienst]
+to stammer	stottern
+incidental	nebensächlich
+to recall [order back]	zurückbeordern
+to recall sth. [bring sth. back into one's mind, remember sth.]	sich [Dat.] etw. [Akk.] ins Gedächtnis zurückrufen [sich wieder an etw. erinnern]
+slack	Flaute {f}
+corkscrew	Korkenzieher {m}
+to sway [walk unsteadily]	schwanken [unstet gehen]
+to deduce sth. from sth.	etw. [Akk.] aus etw. [Dat.] folgern
+to deduce	folgern
+to squeal	quietschen [beim Bremsen, beim Befahren enger Gleisbögen / Kurven]
+to squeak	quietschen
+for vain  [archaic]	vergebens
+to disperse	zerstreuen
+delinquency	Vergehen {n}
+gutted	ausgeweidet
+cast	Gipsverband {m}
+to fill up with unleaded (petrol / gas)	bleifrei tanken
+comb [toothed instrument for separating, cleaning, adjusting, etc.]	Kamm {m} [mit Zinken versehenes Gerät zum Glätten, Ordnen usw.]
+vexed	gereizt
+grasp	Griff {m} [Handgriff]
+surrogate	ersetzend
+to accord	zugestehen
+stems	Stängel {pl}
+succulent [juicy]	saftig
+to implicate	verwickeln
+appliance	Gerät {n}
+reciprocal	gegenseitig
+to ensue	sich [Akk.] einstellen [als Folge von etw. eintreten]
+insurgent	rebellisch
+to recoil	zurückstoßen
+receptacle	Steckdose {f}
+appropriability	Anwendbarkeit {f}
+dismissive	abweisend
+complacency	Selbstzufriedenheit {f}
+exhilaration	Heiterkeit {f} [Erheiterung, freudige Erregung]
+in favor of [Am.]	für [+Akk.] [zugunsten]
+fate	Verhängnis {n}
+diffusion	Verbreitung {f}
+conscientious	gewissenhaft
+scrupulous	gewissenhaft
+retrieval	Abfrage {f}
+stance	Haltung {f} [bes. Sport, typische Stellung]
+depending on how	je nachdem(,) wie
+to reel	taumeln
+reeling drunk	sturzbesoffen [ugs.]
+to extrapolate sth. from sth.	etw. [Akk.] aus etw. [Dat.] erschließen
+point of inflection	Wendepunkt {m}
+to inflect	biegen
+hunch [feeling, premonition]	Ahnung {f} [Vorgefühl]
+outrageously	unerhört
+to concede	nachgeben
+deliberate	bewusst
+to bear a resemblance to	eine Ähnlichkeit [Akk.] aufweisen mit
+gloomy	niedergeschlagen
+alacrity	Eifer {m}
+to wreak havoc	schlimm hausen
+casualties	Verluste {pl} [Tote]
+to decoy	anlocken
+to caution sb.	jdn. verwarnen
+to decay	zerfallen
+conceited [pej.]	arrogant [pej.]
+vain	eingebildet
+gratuitous	grundlos [unbegründet]
+iffy  [coll.]	fraglich
+truce	Waffenruhe {f}
+to grovel	kriechen
+increment	Zuwachs {m}
+to originate [from sth.]	abstammen
+inebriated	betrunken
+insinuation	Andeutung {f}
+cartilage	Knorpel {m}
+to prey	ausbeuten
+rash	Ausschlag {m}
+deficiency	Mangelhaftigkeit {f}
+to imbue [to permeate]	durchdringen
+slack	lustlos
+to tip sth. out	etw. auskippen
+license tag [Am.]	Nummernschild {n}
+locket	Medaillon {n}
+simplemindedness	Unbedarftheit {f}
+eager for	begierig auf
+to bear up [show courage]	sich [Akk.] tapfer zeigen
+sloping	schräg
+pasty	käsig
+to adjourn sth.	etw. [Akk.] verlegen [Termin]
+pitfalls	Fallen {pl}
+strident  [sound, voice]	schrill
+to divine sth.	etw. erahnen
+concise	knapp
+to pry	herumstöbern [ugs.]
+to dispense with	verzichten auf
+disarray	Unordnung {f}
+on compulsion	zwangsweise
+raid	Angriff {m}
+to concoct sth. [devise] [e.g. a scheme or plan]	etw. [Akk.] ausbrüten [ugs.] [ersinnen] [z. B. einen Plan]
+under duress	unter Zwang
+to plunge	versenken
+to tip [to tilt]	kippen
+parish	Kirchgemeinde {f}
+premonition	Vorahnung {f}
+to trench	graben
+to obliterate	unlesbar machen
+to shirk sth.	etw. [Dat.] ausweichen
+composite	zusammengesetzt
+to remit [money]	überweisen
+to suffocate (sb./sth.)	(jdn./etw.) ersticken
+rupture	Bruch {m} [Eingeweidebruch]
+buckling	Stauchung {f}
+guile	List {f}
+esteem	Ansehen {n}
+hobo [Am.]	Penner {m} [ugs.] [mittel-, obdachloser Vagabund]
+gross	übel [Laster, Beleidigung]
+stem	Stamm {m}
+rigged [manipulated, e.g. elections, game]	manipuliert [z. B. Wahlen, Spiel]
+rubble {sg}	Trümmer {pl}
+dispassionate [free from passion]	leidenschaftslos
+to desist from sth.	von etw. [Dat.] absehen
+delinquent	straffällig
+perpetrator	Täter {m}
+to reap [also fig.]	ernten [auch fig.]
+indictable	strafbar
+grand	großartig
+to quit	kündigen
+to linger on [condition, situation]	fortbestehen
+boastful	überheblich
+exculpation	Entschuldigung {f}
+to upset	stören
+to alternate	wechseln [abwechseln]
+susceptible (to sth.)	anfällig (für etw. [Akk.])
+digression	Exkurs {m}
+dispatch	Versand {m}
+tatters	Lumpen {pl}
+adamant	hartnäckig
+countenance [composure]	Fassung {f} [Selbstbeherrschung]
+sneer	Spott {m}
+to sneer	höhnisch grinsen
+plummet	Sturz {m}
+fierce [fig.] [hundred percent]	wütend [fig.] [entschlossen, unerschütterlich]
+thorough	gründlich
+pretense [Am.]	Vorwand {m}
+disgust (at / for sb./sth.)	Widerwille {m} (gegen jdn./etw.)
+fussy	kleinlich
+conjecture	Spekulation {f}
+to exonerate	entlasten
+indispensable	unentbehrlich
+sobriety	Nüchternheit {f}
+electricity generation	Stromerzeugung {f}
+to get a grip on oneself [idiom]	sich [Akk.] zusammenreißen [ugs.]
+to refute sb./sth.	jdn./etw. widerlegen
+to disconfirm sth.	etw. widerlegen
+to speak lightly of sb./sth.	sich abfällig über jdn./etw. äußern
+rogue  [person, organization]	skrupellos
+conduit	Leitung {f}
+to prejudice sth. [chances etc.]	etw. beeinträchtigen
+to contract sth. from sb.	sich [Akk.] bei jdm. mit etw. [Dat.] anstecken
+harness	Gurt {m} [Fallschirm]
+pillow case	Kopfkissenbezug {m}
+off the beaten track	abseits vom Rummel [ugs.]
+to have itchy feet [coll.] [idiom]	ein Reisekribbeln fühlen [ugs.]
+cramped	eingeengt
+tacky [coll.] [showy]	geschmacklos [stillos]
+swanky [coll.] [pretentiously stylish, luxurious and expensive]	protzig [ugs.]
+run down	abgewirtschaftet
+to be homebound [going homeward]	auf dem Heimweg sein
+correctional staff {sg} [usually treated as pl.] [esp. Am.]	Justizvollzugsbeamte {pl}
+regulator	Regler {m}
+steep  [coll.]  [bill, price, rent, etc.]	happig [ugs.]
+to bring up a painful subject	den Finger in die Wunde legen [Redewendung]
+to rub it in [idiom] [twist the knife]	(noch) Salz auf / in die Wunde streuen [Redewendung]
+to lurk	lauern
+to swamp [also fig.]	überschwemmen [auch fig.]
+to be a loose cannon [idiom]	unberechenbar sein [und damit ein Risikofaktor] [Person]
+to act irrationally	unberechenbar handeln
+to spread the word	es weitersagen
+to pry	schnüffeln
+preposterous	grotesk
+repugnant	abstoßend
+vicissitude	Unbeständigkeit {f}
+predicament	Zwickmühle {f} [fig.]
+to palpate sb./sth.	jdn./etw. betasten
+inept  [person]	unfähig
+ingrained	eingefleischt
+to put one's foot down [idiom]	ein Machtwort sprechen [Redewendung]
+to limp	hinken
+to guzzle sth. [drink greedily, continually, or habitually, esp. alcohol]	etw. [Akk.] saufen [tierisch oder gierig trinken, bes. Alkohol]
+rancid	ranzig
+wilted	verwelkt
+rotten	verfault
+moldy  [Am.]	schimmelig
+on the rocks [coll.] [postpos.] [idiom] [plans, marriage etc.]	in die Brüche gegangen [Redewendung]
+evocative	aufrüttelnd [fig.]
+to tie the knot [coll.] [idiom] [get married]	heiraten
+A Match Made in Heaven [Jeanne Carmichael]	Himmlisch - diese Liebe!
+stopgap measure	Behelfsmaßnahme {f}
+to give sb. a bad / hard / rough / thin time (of it) [coll.] [idiom]	jdm. das Leben schwer machen [Redewendung]
+to talk at cross-purposes (with sb. about sth.)	aneinander (über etw. [Akk.]) vorbeireden
+to pass the buck for sth. [idiom]	die Verantwortung für etw. [Akk.] abschieben [Redewendung]
+to be a one-horse race [fig.]	einen sicheren Sieger haben
+meticulous	sorgfältig
+disillusioning	ernüchternd
+to consign	hinterlegen
+to bury oneself in sth. [books, work, grief etc.]	sich in etw. [Dat. o. Akk.] vergraben [fig.] [versenken]
+to sail through sth. [idiom]	etw. [Akk.] mit links schaffen [Redewendung]
+to make heads or tails of sth.	etw. verstehen
+to foist sth. on sb.	jdm. etw. unterschieben
+to pick sb.'s brain	von jdm. durch Fragen lernen
+to grasp the basics of sth.	das Wesentliche einer Sache erfassen
+to think laterally [idiom]	um die Ecke denken [Redewendung]
+to sweep sth. under the mat / rug [also fig.]	etw. unter den Teppich kehren [auch fig.]
+to acquit sb.	jdn. freisprechen
+arson	Brandstiftung {f}
+oil slick	Ölfleck {m}
+irrigation	Bewässerung {f}
+biodegradable	biologisch abbaubar
+walking encyclopaedia	wandelndes Lexikon {n}
+to take in [of fabric or clothing, make narrower]	enger machen
+deserted	im Stich gelassen
+let down	im Stich gelassen
+susurration [poet.]	Flüstern {n}
+clamor [Am.]	Geschrei {n}
+to roar	brüllen
+to buzz	summen
+stern	streng [unnachsichtig; auch Gesicht, Blick]
+husky [hoarse]	heiser [Stimme]
+poise	Gelassenheit {f}
+epiphany	Erleuchtung {f}
+to come up dry [coll.] [Am.]	erfolglos sein
+arduous	anstrengend
+scrumptious  [coll.]	lecker
+unrepentant	reuelos
+destitute	verarmt
+expense allowance	Aufwandsentschädigung {f}
+to beat around the bush [coll.] [idiom]	rumdrucksen [ugs.]
+to bark up the wrong tree [idiom]	auf dem Holzweg sein [Redewendung]
+reprieve [fig.]	Gnadenfrist {f} [fig.]
+reprieve	Atempause {f} [fig.]
+artifice	Geschick {n}
+inherent	dazugehörend
+unshakable belief	unerschütterlicher Glaube {m}
+notion	Vorstellung {f}
+devious	hinterhältig
+formative	bildend
+to persuade sb. [convince]	jdn. überzeugen
+to bequest	vererben
+to expel sb. from sth.	jdn. etw. [Gen.] verweisen [hinausweisen, ausschließen]
+to contravene	zuwiderhandeln
+groove	Rille {f}
+to groove sth. [make a groove in]	etw. einkerben
+to establish	errichten
+to establish	herstellen [schaffen]
+to establish sth.	etw. [Akk.] einrichten [gründen, bilden, errichten]
+to upset sth. [overturn]	etw. [Akk.] umkippen
+obedience	Gehorsam {m}
+to be accustomed to sth.	an etw. gewöhnt sein
+to impart sth. [knowledge, information, etc.]	etw. [Akk.] vermitteln [Wissen, Informationen etc.]
+to evaporate	verdampfen
+devoid of	frei von
+tract	Gebiet {n}
+aridity	Dürre {f}
+gist	Hauptinhalt {m}
+tusk	Stoßzahn {m}
+gravel	Schotter {m}
+encumbrance	Belastung {f}
+subject to	gemäß [+Dat.]
+to patch sth. [mend, repair]	etw. flicken
+to dispatch	versenden
+in case of doubt	im Zweifel
+accounts payable	Lieferantenverbindlichkeiten {pl}
+allegation	Behauptung {f}
+to dispose of sb./ sth.	jdn./etw. aus dem Weg schaffen
+contingent [accidental]	zufällig
+to disarm sth. [e.g. a bomb] [also fig.]	etw. entschärfen [z. B. eine Bombe] [auch fig.]
+to dispose	veranlassen
+disposal	Verkauf {m}
+disposal [of waste]	Entsorgung {f}
+bomb disposal	Bombenentschärfung {f}
+to rely on sth.	auf etw. [Akk.] angewiesen sein
+to please sb. [make happy]	jdn. beglücken
+for nothing [for free, in vain]	umsonst [gratis, vergeblich]
+financially rewarding	finanziell interessant
+enriching	bereichernd
+clumsy	ungeschickt
+immoral	unmoralisch
+vicious	bösartig
+wicked	böse
+naughty	unanständig
+derogatory	abfällig
+to mock sb./sth. [ridicule]	jdn./etw. verspotten
+intriguing	faszinierend
+demanding	anspruchsvoll
+restraint	Zurückhaltung {f}
+facility [more often facilities]	Anlage {f} [Sportanlagen etc.]
+facility [building, equipment]	Einrichtung {f} [bes. öffentlich, z. B. Verkehrsmittel, Schwimmbad]
+struck	getroffen
+barrage	Barriere {f}
+to barrage	unablässig beschießen [milit. Gefechtsfeuer oder fig. mit Fragen oder Kritik]
+missile [weapon]	Rakete {f}
+torch	Fackel {f}
+to slander sb.	jdn. verleumden
+to backbite sb.	jdn. verleumden
+gravest	ernsteste [-r, -s]
+expedient	zielführend
+plot	Grundstück {n}
+plot	Handlung {f}
+adjacent	angrenzend
+hooked on [drugs etc.]	süchtig nach
+to hook up	einhaken
+to pinch sb.	jdn. kneifen
+to refuel	tanken
+sleeve	Ärmel {m}
+disdainful	herablassend
+contemptuous	herablassend
+wig	Perücke {f}
+wick	Docht {m}
+to disgorge	ausspucken [ausspeien]
+skewness	Schiefe {f}
+distrustful	misstrauisch
+mistrustful	misstrauisch
+precipice	Abgrund {m}
+adhesive	klebend
+compaction	Verdichtung {f}
+to accrete	zunehmen
+to commute [to travel between home and work]	pendeln
+leaning	lehnend
+abundance	Überfluss {m}
+to digest sth. [also fig.]	etw. verdauen [auch fig.]
+sparsely	spärlich
+to implicate	zur Folge haben
+varied	abwechslungsreich
+to covenant	vereinbaren
+caveat	Vorbehalt {m}
+skewed	schräg
+to discharge	abladen
+profound	tiefgreifend
+to endure sth. [suffer sth. patiently]	etw. dulden [geh.] [etw. (mit Gelassenheit) ertragen]
+to refrain from sth.	etw. unterlassen
+by habit	aus Gewohnheit
+customs	Zollabfertigung {f}
+to retrieve	zurückholen
+irrespective of	ungeachtet [+ Gen.]
+to refrain from sth.	auf etw. [Akk.] verzichten [etw. unterlassen]
+waiver [relinquishment]	Verzicht {m}
+to foster sth. [promote]	etw. [Akk.] fördern [Musik, Theater, eine Entwicklung etc.]
+provisions	Wertberichtigungen {pl}
+provisions	Rückstellungen {pl}
+to refine sth.	etw. verfeinern
+to amend sth. [modify]	etw. [Akk.] abändern
+amended	abgeändert
+inquiry [investigation]	Nachforschung {f}
+to steer	steuern
+provisions	Vorschriften {pl}
+to deploy sb./sth.	jdn./etw. einsetzen [Personal, Kräfte und Mittel, Ressourcen, Argumente etc.]
+subject to sth.	in Abhängigkeit von etw. [Dat.]
+amendment	Abänderung {f}
+shovel	Schaufel {f}
+in vain	vergebens
+bursting	platzend
+revered	verehrt
+disparity	Ungleichheit {f}
+depending on whether	je nachdem(,) ob
+to astonish sb.	jdn. erstaunen
+to ditch sth. [coll.]	etw. [Akk.] wegschmeißen [ugs.]
+to scatter sth.	etw. streuen
+to relieve	entlasten
+to wind	wickeln
+to reel sth.	etw. [Akk.] spulen
+to annotate	anmerken
+ambiguous	uneindeutig
+[we/they/you] ought to [obligation]	[wir/sie/Sie] sollten
+[we/they/you] ought to [logical probability]	[wir/sie/Sie] müssten
+to endure pain	Schmerz ertragen
+to endure sth.	etw. [Akk.] über sich [Akk.] ergehen lassen
+outrageous	ungeheuerlich
+to come off [to become detached]	abgehen [Griff, Knopf]
+harsh	brutal
+neat [person or appearance, also: lawn, etc.]	gepflegt [Person od. Erscheinung, auch: Rasen etc.]
+bait	Köder {m}
+by way of variation	zur Abwechslung
+by way of variety	zur Abwechslung
+to endure	ertragen
+to get annoyed at sb./sth.	sich ärgern über jdn./etw.
+to advocate	befürworten
+to interfere	behindern
+variation [in style, diet, routine, programme]	Abwechslung {f}
+to give variety	Abwechslung bieten
+firm	fest [sicher, entschlossen, kräftig]
+to reimburse	entschädigen
+to terminate sth.	etw. [Akk.] kündigen [Vertrag, Mitgliedschaft, Kredit etc.]
+to apply for a patent	ein Patent anmelden
+scoop [of ice cream]	Kugel {f} [Eis]
+wrinkle	Falte {f} [Haut]
+resistance	Widerstand {m} [Größe]
+to revise sth. [e.g. a manuscript, an article, a novel]	etw. [Akk.] überarbeiten [und verbessern] [z. B. ein Manuskript, einen Artikel, einen Roman]
+to refine sth.	etw. [Akk.] weiterentwickeln [verbessern]
+assembly line	Fließband {n}
+humidity	Luftfeuchtigkeit {f}
+moist	feucht
+to propose to sb.	um jds. Hand anhalten
+to propose doing sth.	etw. anregen
+to miss out on sth.	etw. verpassen
+disruptive	disruptiv
+to sleep in	(sich [Akk.]) ausschlafen
+cutter	Schneidemesser {n} [einer Maschine]
+composure	Contenance {f} [geh.]
+impudent	unverschämt
+insolent	unverschämt
+tangible	greifbar
+appraisal	Bewertung {f}
+in proportion	verhältnismäßig
+proportion [regarding size]	Größenverhältnis {n}
+ratio	Verhältnis {n} [Mischungsverhältnis]
+prone to sth. [postpos.]	anfällig für etw. [Akk.] [nachgestellt]
+petulant	zickig [ugs.] [pej.]
+to detain sb. [take into custody]	jdn. festnehmen
+contagious [disease; laughter, yawn]	ansteckend
+affirmative action [Am.]	positive Diskriminierung {f}
+to affirm	an Eides statt versichern
+tenet	Grundsatz {m}
+to perish	umkommen
+to unsettle	verunsichern
+indiscretion	Taktlosigkeit {f}
+distasteful	geschmacklos
+as a matter of fact [idiom]	um genau zu sein
+subpoena	Zwangsvorladung {f}
+to subpoena sb.	jdn. schriftlich vorladen
+to agonize	quälen
+motion	Antragsschrift {f}
+blunt [remark, statement]	unverblümt
+moat	Burggraben {m}
+to emerge	hervortreten
+to emerge	entstehen
+to originate	begründen [in etw. seinen Grund, seine Begründung haben]
+to originate sth. [a new method, theory]	etw. [Akk.] entwickeln [Methode etc.]
+to wreck	ruinieren
+rack	Gestell {n}
+to supersede	verdrängen
+to preclude sb./sth.	jdn./etw. ausschließen
+to vomit	kotzen [ugs.] [salopp]
+palms	Handflächen {pl}
+to blush	erröten [geh.] [bes. vor Scham oder Verlegenheit]
+to repeal	widerrufen
+to breathe on sb./sth.	jdn./etw. anhauchen
+to urge sb.	jdn. drängen [etw. zu tun]
+racketeer [pej.]	Gangster {m} [pej.] [unsauberer Geschäftemacher, Gauner]
+to purge	reinigen
+to deflect	umlenken
+hustle [Am.] [coll.] [fraud, swindle]	Abzocke {f} [ugs.]
+to entitle sb.	jdm. ein Recht einräumen
+prone	geneigt
+condemnation	Verachtung {f}
+judgmental	wertend
+tremendous	gewaltig
+marvelous  [Am.]	fabelhaft
+burst	geplatzt
+rogue	boshaft
+endurable	erträglich
+bearable	erträglich
+detention	Festnahme {f}
+to be in detention	nachsitzen
+to be promiscuous	häufig den Partner wechseln
+nonetheless	nichtsdestotrotz [ugs.] [hum.]
+eruption	Ausbruch {m}
+to gaze	anstarren
+to prefer sth. over sth.	etw. [Akk.] etw. [Dat.] bevorzugen [präferieren]
+advocacy	Befürwortung {f}
+alimony [Am.]	Unterhalt {m} [Unterhaltszahlung]
+nervousness	Nervosität {f}
+to jar sth. [limb, joint]	sich [Dat.] etw. stauchen
+evaluative	wertend
+viable	machbar
+It is understood that ...	... angeblich ...
+miscellaneous	vielseitig
+impressed	beeindruckt
+to outnumber	in der Mehrzahl sein
+underground	unter der Erde [nachgestellt]
+to cherish sth. [esteem, hold dear]	etw. [Akk.] wertschätzen
+impediment	Hindernis {n}
+reluctant	abgeneigt
+to thrill sb.	jdn. begeistern
+testimony	Zeugenaussage {f}
+annual balance of accounts	Jahresabschluss {m}
+in the form of	in Form von [+Dat.]
+to page down	vorwärts blättern [alt]
+to page up	rückwärts blättern [alt]
+to flip through sth. [book, newspaper]	in etw. [Dat.] blättern [Buch, Zeitung]
+to cope	die Lage meistern
+defendant [in main proceedings]	Angeklagter {m}
+to evade sb./sth.	jdm./etw. ausweichen
+miscellaneous	diverse
+suspense	Spannung {f} [Aufregung, Ungewissheit]
+to pour sth.	etw. gießen [Flüssigkeit]
+to hinder	hindern
+to detach sth.	etw. ablösen [entfernen]
+to impose censorship	Zensur verhängen
+haze	Dunst {m}
+tentative [indefinite]	unverbindlich [vorläufig, nicht definitiv]
+burst in	hereingeplatzt
+to burst	platzen
+breach	Bruch {m} [z. B. des Vertrauens]
+bruise	Prellung {f}
+to stroke sb./sth. [caress]	jdn./etw. streicheln
+to thrive [of a business etc.]	florieren
+to reckon	meinen
+to assert	geltend machen
+disclaimer of liability	Haftungsausschluss {m}
+affirmation	Versicherung {f}
+trolley	Rollwagen {m}
+cart [Am.]	Einkaufswagen {m}
+leap	Sprung {m}
+leap [in profits, unemployment etc.] [fig.]	sprunghafter Anstieg {m} [fig.]
+to extort sb.	jdn. erpressen
+to void sth.	etw. [Akk.] annullieren
+to punch sth. [cancel (esp. a ticket)]	etw. [Akk.] entwerten [bes. eine Fahrkarte (durch Lochen)]
+persistent	hartnäckig
+emphasis	Nachdruck {m}
+combat	Gefecht {n}
+to amass a fortune	ein Vermögen anhäufen
+to amass	anhäufen
+to breach sth. [a contract, an agreement, a promise, the law, etc.]	etw. [Akk.] brechen [einen Vertrag, ein Abkommen, ein Versprechen, das Gesetz etc.]
+to facilitate	erleichtern
+aligned	justiert
+alignment	Ausrichtung {f}
+to align with sb./sth.	sich [Akk.] jdm./etw. anpassen
+to extinguish sth. [fire, flame, light]	etw. [Akk.] löschen [Flamme, Feuer, geh. auch: Licht]
+humiliation	Erniedrigung {f}
+exploitation	Ausbeutung {f}
+to commission sth.	etw. [Akk.] in Auftrag geben
+to bear sth. [cope with]	etw. verkraften
+to discharge sb.	jdn. entlassen [kündigen] [auch: aus Krankenhaus, Armee etc.]
+to deceed [neologism (disputed): opposite of exceed]	unterschreiten
+to master sth. [field of knowledge, subject]	etw. [Akk.] beherrschen [Wissens-, Sachgebiet]
+sophisticated [cleverly worked or thought out]	ausgeklügelt
+negligent	fahrlässig
+reckless	grob fahrlässig
+faith [trust]	Vertrauen {n}
+temperance [moderation]	Besonnenheit {f}
+tough [meat; constitution]	zäh [Fleisch; Konstitution]
+chewy [meat]	zäh
+to incur displeasure	Missfallen erregen
+to incur debt	Schulden machen
+to incur sth.	etw. [Akk.] auf sich [Akk.] laden
+at disposal	zur Verfügung
+to put sth. in a nutshell [idiom]	etw. [Akk.] auf den Punkt bringen [Redewendung]
+crooked	schief [nicht parallel]
+impudent	dreist
+to discontinue	aufhören
+disposable	wegwerfbar
+to withdraw sth.	etw. [Akk.] streichen [zurücknehmen, annullieren]
+to withdraw sth. [e.g. offer]	etw. [Akk.] zurückziehen [z. B. Angebot]
+to contradict sb.	jdm. widersprechen
+to impose	auferlegen
+to discard sth. [plan, theory etc.]	etw. [Akk.] verwerfen
+shell	Hülle {f}
+shelf	Bücherregal {n}
+pane	Fensterscheibe {f}
+to supersede sb./sth.	jdn./etw. ablösen [ersetzen, an jds. Stelle treten]
+proxy	Stellvertreter {m}
+deputy [proxy, substitute etc.]	Stellvertreter {m}
+virtue	Tugend {f}
+to smack sb.	jdm. eine hauen [ugs.]
+to account for sth.	über etw. [Akk.] Rechenschaft ablegen
+calamity	Katastrophe {f}
+to resuscitate	wiederbeleben
+to invoke	aufrufen
+amenity	Annehmlichkeit {f}
+socket [wall socket]	Steckdose {f}
+to pile sth.	etw. [Akk.] stapeln
+embeddedness	Einbettung {f}
+scarcity	Knappheit {f}
+perilous	gefährlich
+domestic flight	Inlandsflug {m}
+destiny	Bestimmung {f} [Schicksal]
+invariant	unveränderlich
+to understate (sth.)	(etw. [Akk.]) untertreiben
+rigidity	Steifheit {f}
+to play sth. down	etw. [Akk.] verharmlosen
+to deliberate	gründlich nachdenken
+deliberate	bedacht
+deliberate [on purpose]	absichtlich
+customs clearance	Verzollung {f}
+elaborate	ausgearbeitet
+to elaborate	ausarbeiten
+to compile sth. [file etc.]	etw. anlegen [Kartei etc.]
+to compile	zusammenstellen
+inquiry	Erhebung {f} [Untersuchung, Recherche]
+provisions	Bestimmungen {pl}
+to amend sth.	etw. [Akk.] berichtigen
+to adhere	festhalten
+to adhere to sth.	etw. [Akk.] wahren [geh.]
+reimbursement	Rückerstattung {f}
+to ditch sb.	jdn. stehenlassen [fig.] [ugs.]
+to detach	loslösen
+to conceive sth. [conceptualize]	etw. entwerfen
+for a change	zur Abwechslung (mal)
+spatula	Pfannenwender {m}
+to smother sb. [fig.]	jdm. die Luft zum Atmen nehmen [fig.]
+contingent on sth.	bedingt durch etw. [Akk.]
+abreast of sb./sth.	auf gleicher Höhe mit jdm./etw.
+affirmative	bekräftigend
+as a matter of course	selbstverständlich
+As a matter of fact ... [idiom]	Tatsache ist, dass ...
+to blaze	lodern
+Motion denied.	Antrag abgelehnt.
+frightful	fürchterlich
+to cave in	einsinken
+anxiety	Angst {f} [innere Unruhe]
+ulterior	verborgen
+to wreck sth. for sb.	jdm. etw. verkorksen [ugs.]
+throughout	durchweg
+to devastate	verwüsten
+to worry sb.	jdn. ängstigen
+bane	Fluch {m}
+mercenary	Söldner {m}
+basin	Becken {n}
+to infer	schlussfolgern
+prominent	herausragend
+to urge sb. [admonish]	jdn. mahnen
+pouring	strömend
+charitable	wohltätig
+tilt [sloping surface or position; sloping movement, inclination]	Neigung {f} [Schrägfläche; Schrägstellung]
+lapse	Aussetzer {m} [ugs.]
+presumable	voraussichtlich
+ransom	Lösegeld {n}
+social injustices	soziale Missstände {pl}
+veritable	wahrhaftig
+to imbue sth. [fig.]	etw. [Akk.] durchtränken [geh.] [fig.]
+irreverence	Respektlosigkeit {f}
+to linger	trödeln
+exertion	Anstrengung {f}
+to confine sb./sth.	jdn./etw. einschließen [einsperren]
+tacit	unausgesprochen
+napkin	Serviette {f}
+propensity	Neigung {f} [Tendenz]
+to entrench oneself	sich [Akk.] etablieren
+inertia	Trägheit {f}
+cringy [coll.] [embarrassing]	peinlich
+pain reliever	Schmerzmittel {n}
+dexterity	Geschicklichkeit {f}
+indivisibility	Unteilbarkeit {f}
+rampage	Amoklauf {m}
+to decree sth.	etw. [Akk.] erlassen
+obsolescence	Überalterung {f}
+creed	Bekenntnis {n}
+tedious	mühsam
+to rectify sth.	etw. [Akk.] korrigieren [berichtigen, richtig stellen, richtig einstellen]
+gloomy sky	düsterer Himmel {m}
+to blast	sprengen
+conceited [pej.]	eingebildet [pej.] [selbstgefällig]
+famine	Hungersnot {f}
+to prefer sth. to sth.	etw. [Akk.] etw. [Dat.] bevorzugen [präferieren]
+to sting sb. [spur on]	jdn. anstacheln
+jarring [sounds, colours]	schrill
+striking	auffallend
+treaty	Staatsvertrag {m}
+deceitful	hinterlistig
+glee [malicious]	Schadenfreude {f}
+delighted	begeistert
+keen	begeistert
+under compulsion	gezwungen
+in parentheses	in Klammern
+restitution [indemnity, compensation]	Entschädigung {f}
+armistice	Waffenstillstand {m}
+homicide	Totschlag {m}
+imputation	Unterstellung {f}
+to plunge [fall, decrease dramatically]	stürzen [plötzlich fallen, auch Kurse etc.]
+to dissuade sb. from sth.	jdm. etw. ausreden
+to overturn (sth.)	(etw. [Akk.]) kippen
+inaudibly	unhörbar
+holistic	ganzheitlich
+to be subject to sth. [consent, approval]	von etw. abhängig sein [Zustimmung, Einverständnis]
+to be subject to sth.	etw. [Dat.] ausgesetzt sein [einer Kraft, Einflüssen, Verschleiß etc.]
+annual closure	Jahresabschluss {m}
+in terms of	in Form von [+Dat.]
+to browse [books, magazines etc.]	blättern
+to omit sb./sth.	jdn./etw. weglassen
+confident	zuversichtlich
+to dispatch sth. [deal with]	etw. erledigen [sich darum kümmern]
+to decapitate sb.	jdn. köpfen
+to reside	seinen Wohnsitz haben
+rhapsody	Schwärmerei {f}
+to jam sth. [between two things]	etw. [Akk.] einklemmen [quetschen]
+jam [tight spot]	Klemme {f} [ugs.] [Schwierigkeit]
+to conceive sth. [understand]	etw. [Akk.] erfassen [begreifen]
+to concede sth. [admit]	etw. [Akk.] einräumen [zugeben, zugestehen]
+to jar	quietschen
+craving (for)	Sehnsucht {f} (nach)
+to tremble with excitement	vor Aufregung zittern
+to store sth. [keep safe]	etw. [Akk.] aufbewahren
+uptight [coll.]	verklemmt
+to be oblivious of sb./sth.	jdn./etw. nicht wahrnehmen
+to be under the weather [coll.] [idiom] [to feel unwell]	sich [Akk.] nicht wohl fühlen [körperlich]
+to blossom	blühen
+to abate	vermindern
+abatement	Verringerung {f}
+to mistake sb.'s meaning	jdn. missverstehen
+to hitchhike	trampen
+to flow oil	Öl fördern
+gross  [coll.] [disgusting, revolting]	ekelhaft
+to be liable for sth.	für etw. [Akk.] haften
+conquest	Eroberung {f}
+to contemplate sth.	etw. [Akk.] in Betracht ziehen [Redewendung]
+to contemplate sth. [intend sth.]	etw. [Akk.] beabsichtigen
+to retreat	nachgeben
+to unsettle sb.	jdn. verstören
+to incapacitate sth.	etw. [Akk.] lahmlegen
+to cripple sth.	etw. [Akk.] lahmlegen
+to evoke sth.	etw. [Akk.] hervorrufen
+to deter sb. from doing sth.	jdn. davon abhalten, etw. zu tun
+ingenious	genial
+to impute sth. to sb.	jdm. etw. [Akk.] andichten
+to impute sth. to sb.	jdm. etw. [Akk.] unterstellen [unterschieben, andichten]
+to esteem sb./sth.	jdn./etw. wertschätzen
+esteem	Wertschätzung {f}
+to eject [cassette]	ausgeben [Kassette]
+to emit light	Licht ausstrahlen
+fate [force determining life's course; or: the course itself]	Schicksal {n}
+jurisdiction [to be within a court's authority]	Rechtsprechung {f} [der Rechtsprechung eines Gerichts unterliegen]
+to deliberate	nachdenken
+to obfuscate sth. [fig.]	etw. verschleiern [fig.]
+damning  [evidence]	belastend
+incriminating	belastend
+preemption	Vorkaufsrecht {n}
+to incur sth. [suffer, sustain] [e.g. a loss]	etw. [Akk.] erleiden [z. B. einen Verlust]
+sincerity	Ehrlichkeit {f}
+to incur damages	schadenersatzpflichtig werden
+awry	schief
+repository	Aufbewahrungsort {m}
+to defame	diffamieren
+to shatter	zerbrechen
+to tile [a floor]	fliesen
+lid	Deckel {m}
+doomed	dem Untergang geweiht
+outrageous	abscheulich
+despicable	abscheulich
+in reprisal of	als Vergeltung für
+as a reprisal	als Vergeltungsmaßnahme
+cloak	Umhang {m}
+to ballot for a candidate	für einen Kandidaten stimmen
+ballot [card]	Stimmzettel {m}
+to cast sth. [a vote]	etw. [Akk.] abgeben [eine Stimme bei einer Wahl]
+gloom	Dunkelheit {f}
+to sparkle	funkeln
+to subside	nachlassen
+furry [furlike]	pelzig [so ähnlich wie Pelz, pelzartig]
+utter	völlig
+rectification	Korrektur {f}
+redemption	Wiedergutmachung {f}
+discontent	Unzufriedenheit {f}
+to obliterate	auslöschen
+deliberately	wohlüberlegt [geh.]
+contentment	Genügsamkeit {f}
+to constrain oneself	sich [Akk.] zwingen
+wretched	elend
+countenance [facial expression]	Gesichtsausdruck {m}
+reciprocity	Gegenseitigkeit {f}
+to astonish sb.	jdn. in Erstaunen versetzen
+to hit the headlines [idiom]	Schlagzeilen machen [Redewendung]
+to hit the ceiling [coll.] [idiom] [become very angry]	an die Decke gehen [ugs.] [Redewendung] [vor Wut]
+presumptuous	überheblich
+to presume sth. [assume]	etw. [Akk.] voraussetzen [annehmen]
+to indulge sb.	jdn. verhätscheln [ugs.]
+antler	Geweih {n} [Geweihhälfte od. -stange]
+velvet	Samt {m}
+eligibility [e.g., for public funding]	Förderfähigkeit {f}
+eligibility	Eignung {f}
+abduction	Entführung {f}
+to flicker	flackern
+toad [family Bufonidae, order Anura]	Kröte {f}
+sth. tingles [of a sensation]	etw. prickelt
+conscientiousness	Gewissenhaftigkeit {f}
+repercussion	Rückwirkung {f}
+glib reply [repartee]	schlagfertige Antwort {f} [schlagfertig hier im Sinn von wortgewandt, jedoch u. U. unaufrichtig]
+to be quick on the comeback	schlagfertig sein
+coil	Spule {f}
+to coil	aufwickeln
+reprimand	Verweis {m}
+to commemorate sth.	etw. [Akk.] feiern [ein Ereignis würdigen]
+vertigo	Höhenangst {f}
+acclaim	Beifall {m}
+to acquiesce in sth.	etw. hinnehmen
+to acquiesce	sich [Akk.] fügen
+to acquiesce	dulden
+to falter	wanken
+to chime in	sich [Akk.] einklinken [in ein Gespräch]
+dull [boring]	langweilig
+irrelevant	unbedeutend [belanglos, irrelevant]
+affluent	wohlhabend
+mischief	Missstand {m}
+absent on business	dienstlich abwesend
+to concur	beipflichten
+deceased <decd., dec.> [formal]	verstorben <verst.> [geh.]
+to cut to the chase [Am.] [coll.] [idiom]	auf den Punkt kommen [Redewendung]
+penitence	Buße {f}
+inquisitive	neugierig
+to row back on sth. [statement] [idiom]	etw. [Akk.] zurücknehmen [Äußerung]
+replete (with)	voll gestopft (mit)
+to front	konfrontieren
+to be a long shot [have only a slight chance]	ziemlich aussichtslos sein
+to baffle sb.	jdn. vor ein Rätsel stellen
+to become rampant	überhandnehmen
+wabbly  [spv.]	schwankend
+imminent [of thunderstorm, danger, crisis etc.]	drohend [bevorstehend]
+imminent	unmittelbar bevorstehend
+crafted	handgemacht
+of little avail	kaum von Nutzen
+hedgehog [Erinaceus europaeus]	Igel {m}
+to retract sth. [statement etc.]	etw. zurücknehmen [Behauptung usw.]
+precarious	heikel
+immensity	Unermesslichkeit {f}
+condensed	zusammengefasst
+drilling	Bohren {n}
+flaky [coll.] [unreliable]	unzuverlässig [Gerät, Programm]
+debt waiver	Forderungsverzicht {m}
+waiver clause	Verzichtklausel {f}
+aligned	angepasst [an eine Linie, ein Programm]
+deaf	taub
+impracticable	unausführbar
+crafty	schlau
+loophole	Schlupfloch {n}
+to infringe	verletzen [übertreten, verstoßen gegen]
+stipulations	Vereinbarungen {pl}
+dreadful	entsetzlich
+to exhilarate	erheitern
+glitch [coll.]	Panne {f}
+to adjourn sth.	etw. [Akk.] verschieben [aufschieben, vertagen]
+to grasp sth. [understand]	etw. [Akk.] begreifen [verstehen]
+commingling	Vermischung {f}
+to depreciate	abwerten
+frankly	offen gesagt
+colander	Sieb {n} [z. B. für Gemüse, Nudeln]
+unwavering	felsenfest
+to get one's act together [coll.] [idiom]	sich [Akk.] zusammenreißen [ugs.]
+to shun sb./sth.	jdn./etw. meiden
+to incorporate sth. (in / into sth.) [e.g. changes, a quotation, flour]	etw. [Akk.] (in etw. [Akk.]) einarbeiten [z. B. Änderungen, ein Zitat, Mehl]
+superfluous	überflüssig
+harness	Geschirr {n} [für Pferde, Ochsen]
+insect repellent	Insektenmittel {n}
+amenities	Annehmlichkeiten {pl}
+linen	Laken {n}
+shabby	schäbig
+battle tank	Kampfpanzer {m} <KPz>
+discharge	Entlassung {f} [aus Gefängnis, Krankenhaus, Amt, Posten]
+rattling	rasselnd
+to touch on a sore point [fig.]	an eine alte Wunde rühren [geh.] [fig.] [Redewendung]
+elusive	trügerisch
+decisiveness	Entschlusskraft {f}
+affection	Zuneigung {f}
+to doxx sb.	jds. echten Namen (und weitere personenbezogene Daten) im Internet preisgeben [z. B. Geburtsdatum, Adresse, Telefonnummer]
+to get about [travel]	(viel) herumkommen [ugs.] [reisen]
+preponderance	Überlegenheit {f}
+tenable	vertretbar
+frivolous	leichtfertig
+repulsive	abstoßend
+to haul sth. [transport goods]	etw. [Akk.] transportieren
+to haul sb./sth.	jdn./etw. schleppen
+detrimental	schädlich
+assertive	durchsetzungsfähig
+unfazed [coll.]	unbeeindruckt
+enlightenment [bodhi]	Erkenntnis {f}
+realisation [Br.] [awareness]	Erkenntnis {f} [Einsicht]
+to take sth. by storm	etw. [Akk.] erstürmen
+to swallow the bitter pill [idiom]	in den sauren Apfel beißen [Redewendung]
+alive and kicking [idiom]	gesund und munter [Redewendung]
+splitting headache	rasender Kopfschmerz {m}
+to play by ear	nach Gehör spielen
+to keep one's chin up [idiom]	den Mut nicht verlieren
+limp	schlaff
+to tiptoe	schleichen
+to stride [walk with long steps]	schreiten [ausgreifende Schritte machen]
+nail-biting	nervenzerreißend
+knee-slapper [coll.]	Schenkelklopfer {m} [ugs.]
+jaw-dropping	atemberaubend
+crunchy	knackig [Apfel]
+to nibble sth.	etw. [Akk.] knabbern
+to gobble sth.	etw. [Akk.] hinunterschlingen
+stinky	stinkend
+unripe	unreif
+to bury the hatchet [idiom]	das Kriegsbeil begraben [Redewendung]
+on the rocks	mit Eiswürfeln
+head over heels [idiomatic expression]	Hals über Kopf [ugs.] [Redensart]
+to keep sb./sth. at arm's length	jdn./etw. fernhalten
+to give sb. the cold shoulder	jdn. kühl behandeln
+to be under sb.'s thumb	von jdm. beherrscht werden
+recurrence	Wiederauftreten {n}
+illicit	illegal
+to eat up [fig.]	aufbrauchen
+to use up	aufbrauchen
+to grow on sb. [coll.]	jdm. ans Herz wachsen [Redewendung]
+to be fond of sb.	jdn. lieb haben
+bespoke [Br.]	maßgeschneidert
+ballpark figure [coll.]	Schätzwert {m} [ungefähre Zahl]
+holistic approach	ganzheitlicher Ansatz {m}
+time consuming	langwierig [zeitraubend]
+to commute	umwandeln
+to talk past each other	aneinander vorbeireden
+to mind one's (own) business [idiom]	sich [Akk.] um seinen eigenen Kram kümmern [ugs.] [Redewendung]
+to get down to business [idiom]	zur Sache kommen
+to talk business	über Geschäfte reden
+to mean business [coll.] [idiom]	es ernst meinen
+observant [alert]	aufmerksam
+to dwell on / upon sth.	sich [Akk.] mit etw. [Dat.] aufhalten
+cramped position	verkrampfte Position {f}
+to brush up (on) sth. [knowledge]	etw. [Akk.] (wieder) auffrischen [Kenntnisse]
+to speak one's mind [idiom]	seine Meinung sagen
+to cross one's mind	jdm. in den Sinn kommen [Redewendung] [einfallen]
+to demean sb./sth.	jdn./etw. herabsetzen
+to vent sth. [feelings, opinion]	etw. [Akk.] äußern [Gefühle, Meinung]
+Great minds think alike.	Zwei Doofe, ein Gedanke. [ugs.]
+to pick one's words	seine Worte sorgfältig wählen
+to wrestle with a problem	mit einem Problem ringen
+to jump to conclusions [idiom]	voreilige Schlüsse ziehen
+to sweep sth. under the carpet [also fig.]	etw. unter den Teppich fegen [auch fig.]
+to cook the books [coll.] [idiom]	die Bücher fälschen
+delicate [exquisite]	erlesen [geh.]
+acid rain	saurer Regen {m}
+distinctive	bezeichnend
+to take sth. by storm [also fig.: sb.'s heart, the audience, etc.]	etw. im Sturm erobern [auch fig.: jds. Herz, das Publikum etc.]
+guiding role	Leitrolle {f}
+to be left high and dry [idiom]	im Stich gelassen werden [Redewendung]
+to let down sth. [hem]	etw. auslassen [Saum]
+to let out a dress	ein Kleid auslassen
+tremulous	zitternd
+hushed conversation	gedämpfte Unterhaltung {f}
+to cut in in front of sb.	jdn. schneiden [im Straßenverkehr]
+to run a red light [coll.]	eine rote Ampel überfahren
+sentiment	Geisteshaltung {f}
+to tumble	taumeln
+to put down roots	Wurzeln schlagen
+damage to property	Sachbeschädigung {f}
+plastered  [coll.]	besoffen [ugs.]
+mundane	alltäglich
+to quiver with cold	vor Kälte zittern
+to tremble with	zittern vor
+to shiver with excitement	vor Erregung zittern
+to shiver with cold	vor Kälte zittern
+repentance	Reue {f}
+sobriety	Besonnenheit {f}
+extensive	ausführlich
+broadly	weitgehend
+immersive experience [3D game, movie, theatre]	eindringliche Erfahrung {f} [3D-Spiel, Kino, Theater]
+to advise sb. against sth.	jdm. von etw. abraten
+preposterous	absurd
+to endeavor [Am.]	bestreben
+to emerge	hervorkommen
+to deflect	ablenken
+emphasis	Betonung {f}
+inquiry [query]	Anfrage {f}
+miscellaneous	verschieden [divers, unterschiedlich]</script>
+
+<script>
+(function(){
+  "use strict";
+  var LS_KEY = "vokabeltrainer.v1";
+  var DAY = 86400000;
+  // Leitner intervals in days, index = box (0..5)
+  var INTERVAL = [0, 1, 2, 4, 9, 21];
+  var HARD_CLEARS_AT = 3;   // box at which a word stops counting as "schwierig"
+  var LEARNED_AT = 4;       // box at which a word counts as "gut gelernt"
+
+  var store = null;   // {version, updated, savedAt, entries:[...]}
+  var session = null; // {mode, queue:[entry], total, mastered}
+  // "dirty" = data changed since the last exported backup. Derived from
+  // timestamps so it stays correct across reloads (survives closing the app).
+  function isDirty(){ return store ? (store.updated||0) > (store.savedAt||0) : false; }
+
+  // ---------- helpers ----------
+  var $ = function(id){ return document.getElementById(id); };
+  function show(id){ $(id).classList.remove("hidden"); }
+  function hide(id){ $(id).classList.add("hidden"); }
+  function toast(msg){
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  // Normalise an English string for the (assistive) match hint.
+  function norm(s){
+    return s.toLowerCase()
+      .replace(/\[[^\]]*\]/g," ")   // [Br.], [coll.] ...
+      .replace(/\{[^}]*\}/g," ")    // {m}, {pl} ...
+      .replace(/\([^)]*\)/g," ")    // (...)
+      .replace(/\bto\b/g," ")
+      .replace(/\b(sth|sb|one's|oneself|so|etw|jdn|jdm)\b\.?/g," ")
+      .replace(/[.,;:!?/'"’\-]/g," ")
+      .replace(/\s+/g," ").trim();
+  }
+  function levenshtein(a,b){
+    if(a===b) return 0;
+    var m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+    var prev=new Array(n+1),cur=new Array(n+1),i,j;
+    for(j=0;j<=n;j++) prev[j]=j;
+    for(i=1;i<=m;i++){ cur[0]=i;
+      for(j=1;j<=n;j++){
+        var cost=a.charCodeAt(i-1)===b.charCodeAt(j-1)?0:1;
+        cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+cost);
+      }
+      var tmp=prev; prev=cur; cur=tmp;
+    }
+    return prev[n];
+  }
+  function judge(userRaw, answerEn){
+    var u = norm(userRaw||"");
+    if(!u) return "miss";
+    // the stored English may hold several variants separated by "/"
+    var parts = answerEn.split("/").map(norm).filter(Boolean);
+    parts.push(norm(answerEn));
+    for(var i=0;i<parts.length;i++){
+      var a=parts[i]; if(!a) continue;
+      if(a===u) return "ok";
+      if(a.indexOf(u)>=0 || u.indexOf(a)>=0) return "ok";
+      var d=levenshtein(a,u), lim=Math.max(1, Math.round(Math.max(a.length,u.length)*0.2));
+      if(d<=lim) return "near";
+    }
+    return "miss";
+  }
+
+  // ---------- data ----------
+  function parseTSV(text){
+    var out=[], lines=text.replace(/\r/g,"").split("\n");
+    for(var i=0;i<lines.length;i++){
+      var ln=lines[i]; if(!ln) continue;
+      var t=ln.indexOf("\t"); if(t<0) continue;
+      var en=ln.slice(0,t).trim(), de=ln.slice(t+1).trim();
+      if(en && de) out.push([en,de]);
+    }
+    return out;
+  }
+  function newEntry(en,de){
+    return { en:en, de:de, box:0, due:0, streak:0, seen:0, hard:false };
+  }
+  function seedStore(){
+    var seed = parseTSV($("seed").textContent);
+    var seen={}, entries=[];
+    for(var i=0;i<seed.length;i++){
+      var key=seed[i][0]+"\t"+seed[i][1];
+      if(seen[key]) continue; seen[key]=1;
+      entries.push(newEntry(seed[i][0], seed[i][1]));
+    }
+    return { version:1, updated:Date.now(), savedAt:0, entries:entries };
+  }
+  function load(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if(raw){ store = JSON.parse(raw); }
+    }catch(e){ store=null; }
+    if(!store || !store.entries || !store.entries.length){
+      store = seedStore();       // savedAt=0 -> counts as unsynced until first backup
+      persist();
+    }
+  }
+  function persist(){
+    store.updated = Date.now();
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }
+    catch(e){ toast("Speicher voll – bitte Backup exportieren"); }
+    renderSaveBar();
+  }
+
+  // ---------- stats & home ----------
+  function counts(){
+    var now=Date.now(), due=0, hard=0, learned=0;
+    for(var i=0;i<store.entries.length;i++){
+      var e=store.entries[i];
+      if((e.due||0) <= now) due++;
+      if(e.hard) hard++;
+      if(e.box >= LEARNED_AT) learned++;
+    }
+    return {due:due, hard:hard, learned:learned, total:store.entries.length};
+  }
+  function renderHome(){
+    var c=counts();
+    $("statDue").textContent=c.due;
+    $("statHard").textContent=c.hard;
+    $("statLearned").textContent=c.learned;
+    $("statTotal").textContent=c.total;
+    $("dueHint").textContent = c.due? "· "+c.due+" fällig" : "· nichts fällig";
+    $("hardHint").textContent = c.hard? "· "+c.hard : "";
+    $("startDue").disabled = c.due===0;
+    $("startHard").disabled = c.hard===0;
+    renderSaveBar();
+  }
+  function renderSaveBar(){
+    var bar=$("saveBar");
+    if(isDirty()){
+      bar.innerHTML='<span class="dot dirty"></span>Ungesicherte Änderungen – über ⚙️ „In iCloud sichern"';
+    }else{
+      var d = store.savedAt? new Date(store.savedAt) : null;
+      bar.innerHTML='<span class="dot clean"></span>Gesichert'+(d? " · "+d.toLocaleDateString():"" );
+    }
+  }
+
+  // ---------- practice ----------
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+  function startSession(mode){
+    var now=Date.now(), pool=[];
+    for(var i=0;i<store.entries.length;i++){
+      var e=store.entries[i];
+      if(mode==="due" && (e.due||0)>now) continue;
+      if(mode==="hard" && !e.hard) continue;
+      pool.push(e);
+    }
+    if(mode==="due"){ pool.sort(function(a,b){ return (a.due||0)-(b.due||0); }); }
+    else { shuffle(pool); }
+    if(!pool.length){ toast("Nichts zu üben"); return; }
+    session = { mode:mode, queue:pool.slice(), total:pool.length, mastered:0 };
+    hide("home"); hide("done"); show("practice");
+    $("modeChip").textContent = mode==="due"?"Fällig":mode==="hard"?"Schwierige":"Alle";
+    nextCard();
+  }
+
+  function nextCard(){
+    if(!session.queue.length){ finishSession(); return; }
+    var e = session.queue[0];
+    session.current = e;
+    // reset card UI
+    show("askArea"); hide("revealArea"); hide("gradeArea");
+    $("promptDe").innerHTML = escapeHtml(e.de) + (e.hard? '<span class="badge-hard">schwierig</span>':'');
+    $("promptExtra").textContent = "";
+    $("answerInput").value=""; $("answerInput").disabled=false;
+    var done = session.total - session.queue.length;
+    $("progFill").style.width = Math.round(100*done/session.total)+"%";
+    // focus (works after a user gesture; harmless otherwise)
+    setTimeout(function(){ try{ $("answerInput").focus(); }catch(e){} }, 30);
+  }
+
+  function reveal(){
+    var e=session.current;
+    var verdict = judge($("answerInput").value, e.en);
+    show("revealArea"); hide("askArea"); show("gradeArea");
+    $("answerEn").textContent = e.en;
+    var yv = $("answerInput").value.trim();
+    $("yourAnswer").textContent = yv? "Deine Eingabe: "+yv : "(keine Eingabe)";
+    var h=$("hint");
+    h.className="hint "+(verdict==="ok"?"ok":verdict==="near"?"near":"miss");
+    h.textContent = verdict==="ok"?"✓ stimmt überein":verdict==="near"?"≈ fast richtig":"✗ weicht ab";
+    // pre-highlight the suggested grade button subtly
+  }
+
+  function grade(g){
+    var e=session.current, now=Date.now();
+    e.seen = (e.seen||0)+1;
+    if(g===2){ // Perfekt
+      e.box = Math.min(5, (e.box||0)+1);
+      e.streak = (e.streak||0)+1;
+      e.due = now + DAY*INTERVAL[e.box];
+      if(e.box >= HARD_CLEARS_AT) e.hard = false;
+      session.queue.shift();
+      session.mastered++;
+    } else if(g===1){ // Fast
+      e.streak = 0;
+      e.due = now + DAY*1;
+      if(e.box < HARD_CLEARS_AT) e.hard = true;
+      var it=session.queue.shift(); session.queue.push(it); // nochmal in dieser Runde
+    } else { // Gar nicht
+      e.box = 0; e.streak = 0; e.due = now; e.hard = true;
+      var it2=session.queue.shift(); session.queue.push(it2);
+    }
+    persist();
+    nextCard();
+  }
+
+  function skip(){
+    var it=session.queue.shift(); session.queue.push(it);
+    nextCard();
+  }
+
+  function finishSession(){
+    hide("practice"); show("done");
+    $("doneText").textContent = session.mastered+' Wörter als „Perfekt" abgehakt. Weiter so!';
+    session=null; renderHome();
+  }
+
+  function quitSession(){
+    session=null; hide("practice"); show("home"); renderHome();
+  }
+
+  function escapeHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  // ---------- import / export ----------
+  function exportBackup(){
+    store.savedAt = Date.now();
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){}
+    var blob = new Blob([JSON.stringify(store)], {type:"application/json"});
+    var d=new Date(), pad=function(n){return (n<10?"0":"")+n;};
+    var name = "vokabeln-backup-"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+".json";
+    var url = URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    renderSaveBar();   // savedAt now >= updated -> shows "Gesichert"
+    toast("Backup erstellt – in iCloud Drive ablegen");
+  }
+
+  function importJson(file){
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var obj=JSON.parse(r.result);
+        if(!obj.entries || !obj.entries.length) throw new Error("leer");
+        store=obj; if(!store.version) store.version=1;
+        store.savedAt=Date.now();   // just restored from a file -> in sync
+        localStorage.setItem(LS_KEY, JSON.stringify(store));
+        renderHome(); closeMenu();
+        toast("Backup geladen: "+store.entries.length+" Wörter");
+      }catch(e){ toast("Datei nicht lesbar"); }
+    };
+    r.readAsText(file);
+  }
+
+  function importList(file){
+    var r=new FileReader();
+    r.onload=function(){
+      var pairs=parseTSV(r.result);
+      if(!pairs.length){ toast("Keine gültigen Zeilen gefunden"); return; }
+      var index={}, i;
+      for(i=0;i<store.entries.length;i++){
+        var e=store.entries[i];
+        index[e.en+"\t"+e.de]=true;
+      }
+      var added=0, seen={};
+      for(i=0;i<pairs.length;i++){
+        var key=pairs[i][0]+"\t"+pairs[i][1];
+        if(seen[key]) continue; seen[key]=1;
+        if(!index[key]){ store.entries.push(newEntry(pairs[i][0],pairs[i][1])); index[key]=true; added++; }
+      }
+      persist(); renderHome(); closeMenu();
+      toast(added? added+" neue Wörter hinzugefügt":"Keine neuen Wörter – alles schon vorhanden");
+    };
+    r.readAsText(file);
+  }
+
+  function resetAll(){
+    if(!confirm("Wirklich ALLE Wörter und Fortschritte löschen und die eingebaute Startliste wiederherstellen?")) return;
+    store=seedStore(); localStorage.setItem(LS_KEY, JSON.stringify(store));
+    renderHome(); closeMenu(); toast("Zurückgesetzt");
+  }
+
+  // ---------- menu / info ----------
+  function openMenu(){
+    var bytes = new Blob([JSON.stringify(store)]).size;
+    var kb = (bytes/1024).toFixed(0);
+    $("storageLine").textContent = store.entries.length+" Wörter · ca. "+kb+" KB belegt";
+    show("menu");
+  }
+  function closeMenu(){ hide("menu"); }
+
+  var HELP = ''+
+    '<p><b>Abfrage:</b> Dir wird das deutsche Wort gezeigt. Tippe deine englische Übersetzung ein und drücke <b>Aufdecken</b>. '+
+    'Danach vergleichst du selbst und wählst:</p>'+
+    '<p>🟥 <b>Gar nicht</b> – kommt sofort wieder dran und wird als <i>schwierig</i> markiert.<br>'+
+    '🟧 <b>Fast</b> – morgen nochmal, bleibt vorerst schwierig.<br>'+
+    '🟩 <b>Perfekt</b> – rückt eine Stufe weiter, größerer Abstand bis zur nächsten Abfrage.</p>'+
+    '<p><b>Wann verschwindet ein Wort aus „schwierig"?</b> Nach '+HARD_CLEARS_AT+'× hintereinander „Perfekt" (Stufe '+HARD_CLEARS_AT+'). '+
+    'Ab Stufe '+LEARNED_AT+' zählt es als „gut gelernt". Die Wiederhol-Abstände wachsen: 1, 2, 4, 9, 21 Tage.</p>'+
+    '<p><b>iCloud-Sicherung:</b> Der Fortschritt liegt sofort lokal im Browser. Für iCloud tippe ⚙️ → '+
+    '<b>In iCloud sichern</b>, wähle im Teilen-Dialog <i>„In Dateien sichern"</i> und lege die Datei in deinem iCloud-Drive-Ordner ab. '+
+    'Zum Wiederherstellen: <b>Backup laden</b>.</p>'+
+    '<p><b>Neue Liste:</b> Über <b>Neue Vokabelliste importieren</b> lädst du eine erweiterte dict.cc-Datei (.txt). '+
+    'Schon vorhandene Wörter behalten ihren Fortschritt, nur neue kommen dazu.</p>'+
+    '<p><small>Speicherbedarf: ca. 0,1–0,2 KB pro Wort inkl. Fortschritt. Auch 6.000 Wörter bleiben unter ~1,5 MB – '+
+    'weit unter dem Limit. Der Verbrauch wächst nur mit der Wortzahl, nicht mit der Übungszeit.</small></p>';
+
+  // ---------- events ----------
+  $("startDue").onclick=function(){ startSession("due"); };
+  $("startHard").onclick=function(){ startSession("hard"); };
+  $("startAll").onclick=function(){ startSession("all"); };
+  $("checkBtn").onclick=reveal;
+  $("answerInput").addEventListener("keydown",function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); reveal(); } });
+  $("skipBtn").onclick=skip;
+  $("quit").onclick=quitSession;
+  $("doneHome").onclick=function(){ hide("done"); show("home"); renderHome(); };
+  Array.prototype.forEach.call(document.querySelectorAll(".grade"),function(b){
+    b.onclick=function(){ grade(parseInt(b.getAttribute("data-g"),10)); };
+  });
+
+  $("openMenu").onclick=openMenu;
+  $("menuClose").onclick=closeMenu;
+  $("menu").addEventListener("click",function(e){ if(e.target.id==="menu") closeMenu(); });
+  $("mExport").onclick=exportBackup;
+  $("mImportJson").onclick=function(){ $("fileJson").click(); };
+  $("mImportList").onclick=function(){ $("fileList").click(); };
+  $("mReset").onclick=resetAll;
+  $("mInfo").onclick=function(){ $("helpBody").innerHTML=HELP; hide("menu"); show("helpSheet"); };
+  $("helpClose").onclick=function(){ hide("helpSheet"); };
+  $("helpSheet").addEventListener("click",function(e){ if(e.target.id==="helpSheet") hide("helpSheet"); });
+  $("fileJson").onchange=function(){ if(this.files[0]) importJson(this.files[0]); this.value=""; };
+  $("fileList").onchange=function(){ if(this.files[0]) importList(this.files[0]); this.value=""; };
+
+  // ---------- go ----------
+  load(); renderHome();
+})();
+</script>
